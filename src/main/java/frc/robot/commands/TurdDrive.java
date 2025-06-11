@@ -52,13 +52,13 @@ public class TurdDrive extends Command {
 			swerve.targetAngle = -Units.degreesToRadians(DPAD.get());
 		}
 
-		if (boost.get()) {
-			swerve.setAmpLimit(RobotConfig.boostDriveLimit);
-			maxSpeed = 1;
-		} else {
-			swerve.setAmpLimit(RobotConfig.driveAmpLimit);
-			maxSpeed = RobotConfig.robotMaxSpeed;
-		}
+		// if (boost.get()) {
+		// 	swerve.setAmpLimit(RobotConfig.boostDriveLimit);
+		// 	maxSpeed = 1;
+		// } else {
+		// 	swerve.setAmpLimit(RobotConfig.driveAmpLimit);
+		// 	maxSpeed = RobotConfig.robotMaxSpeed;
+		// }
 
 		// notice that X and Y are flipped - this is due to differences between WPILib
 		// field-based orientation (+Y is field "up") and conventional robot-based

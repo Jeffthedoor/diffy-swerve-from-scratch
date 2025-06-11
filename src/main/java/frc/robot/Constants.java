@@ -28,19 +28,41 @@ public final class Constants {
 
 		public static final int pigeonID = 25;
 
-		public static final int leftAzimuthID = 18;
-		public static final int rightAzimuthID = 14;
+		public final class pods {
+			public final int leftMotorID;
+			public final int rightMotorID;
+			public final int encoderID;
+			public final double encoderOffset;
+			public pods(int leftMotorID, int rightMotorID, int encoderID, double encoderOffset) {
+				this.leftMotorID = leftMotorID;
+				this.rightMotorID = rightMotorID;
+				this.encoderID = encoderID;
+				this.encoderOffset = encoderOffset;
+			}
+			public static final boolean azimuthInvert = false;
+			public static final boolean leftMotorInvert = false; 
+			public static final boolean rightMotorInvert = false; 
+			public static final boolean encoderInvert = false;
 
-		public static final int leftDriveID = 17;
-		public static final int rightDriveID = 13;
+			public static final double azimuthRadiansPerRotation = 1;
 
-		public static final int CAN_LeftAbsoluteEncoderID = 24;
-		public static final int CAN_RightAbsoluteEncoderID = 22;
+			public static final boolean motorsBrake = true;
+			public static final int ampLimit = 80;
+			public static final double maxOutput = 1;
+			public static final double rampRate = 0.2;
 
-		public static final boolean leftAzimuthInvert = false;
-		public static final boolean rightAzimuthInvert = false;
-		public static final boolean leftDriveInvert = false;
-		public static final boolean rightDriveInvert = false;
+			public static final double azimuthkP = 1.2;
+			public static final double azimuthkI = 0.02;
+			public static final double azimuthkD = 0.001;
+			public static final double azimuthkS = 0.0;
+		}
+		public static final pods[] Pods = new pods[4];
+		{
+			Pods[0] = new pods(0, 1, 2, 0d);
+			Pods[1] = new pods(3, 4, 5, 0d);
+			Pods[2] = new pods(6, 7, 8, 0d);
+			Pods[3] = new pods(9, 10, 11, 0d);
+		}
 	}
 
 	public final class RobotConfig {
@@ -56,34 +78,5 @@ public final class Constants {
 
 		public static final double robotMaxSpeed = 3.99; // meters per second
 
-		// Azimuth Settings
-		public static final boolean azimuthBrake = true;
-
-		public static final int azimuthAmpLimit = 80;
-		public static final double azimuthMaxOutput = 1;
-
-		public static final double azimuthkP = 1.2;
-
-		public static final double azimuthkI = 0.02;
-		public static final double azimuthkD = 0.001;
-		public static final double azimuthkS = 0.0;
-
-		public static final double azimuthDriveSpeedMultiplier = 0.5;
-
-		public static final double azimuthMotorRampRate = 0.0;
-
-		// Drive Settings
-		public static final double podMaxSpeed = 1;
-
-		public static final boolean driveBrake = false;
-
-		public static final int driveAmpLimit = 80;
-		public static final int boostDriveLimit = 90;
-		public static final double driveMotorRampRate = 0.2;
-
-		public static final double azimuthRadiansPerMotorRotation = 2.200000047683716;
-
-		public static final double leftOffset = 0;
-		public static final double rightOffset = 0;
 	}
 }

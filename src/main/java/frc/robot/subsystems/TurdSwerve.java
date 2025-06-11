@@ -27,12 +27,10 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.RobotMap;
 import frc.robot.Constants.RobotConfig;
 
-/** REV Turdswerve implementation */
 public class TurdSwerve extends SubsystemBase {
 	private final Pigeon2 gyro;
 
-	private final TurdPod leftPod;
-	private final TurdPod rightPod;
+	private final TurdPod[] pods = new TurdPod[4];
 
 	private final SwerveDriveOdometry odometer;
 
@@ -64,29 +62,22 @@ public class TurdSwerve extends SubsystemBase {
 		gyro = new Pigeon2(RobotMap.pigeonID);
 		gyroPID.enableContinuousInput(0.0, 2 * Math.PI);
 
-		azimuthP = tab.add("azimuth P", RobotConfig.azimuthkP).getEntry();
-		azimuthI = tab.add("azimuth I", RobotConfig.azimuthkI).getEntry();
-		azimuthD = tab.add("azimuth D", RobotConfig.azimuthkD).getEntry();
-		// change wildcard gain dependent on pod type
-		azimuthkS = tab.add("azimuth kS", RobotConfig.azimuthkS).getEntry();
-		ADMult = tab.add("Drive Speed Multiplier", RobotConfig.azimuthDriveSpeedMultiplier).getEntry();
 
-		leftPod = new TurdPod(RobotMap.CAN_LeftAbsoluteEncoderID, RobotMap.leftAzimuthID, RobotMap.leftDriveID,
-				RobotConfig.leftOffset, RobotMap.leftAzimuthInvert,
-				RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake,
-				RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP,
-				RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput,
-				RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.leftDriveInvert,
-				RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
-		rightPod = new TurdPod(RobotMap.CAN_RightAbsoluteEncoderID, RobotMap.rightAzimuthID, RobotMap.rightDriveID,
-				RobotConfig.rightOffset, RobotMap.rightAzimuthInvert,
-				RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake,
-				RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP,
-				RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput,
-				RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.rightDriveInvert,
-				RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
+		for (int i = 0; i < pods.length; i++) {
+			pods[i] = new TurdPod(RobotMap.Pods[i].encoderID, RobotMap.Pods[i].leftMotorID, RobotMap.Pods[i].rightMotorID, RobotMap.Pods[i].encoderOffset, RobotMap.pods.azimuthInvert, RobotMap.pods.ampLimit, RobotMap.pods.azimuthRadiansPerRotation, false/*REMOVETHIS*/, RobotMap.pods.rampRate, RobotMap.pods.azimuthkP, RobotMap.pods.azimuthkI, RobotMap.pods.azimuthkD, RobotMap.pods.azimuthkS, RobotMap.pods.maxOutput, 1/*REMOVE*/, false/*REMOVE*/, 10/*REMOVE*/, false, 0.2/*REMOVE*/);
+		}
+		// leftPod = new TurdPod(RobotMap.CAN_LeftAbsoluteEncoderID, RobotMap.leftAzimuthID, RobotMap.leftDriveID,
+		// 		RobotConfig.leftOffset, RobotMap.leftAzimuthInvert,
+		// 		RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake,
+		// 		RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP,
+		// 		RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput,
+		// 		RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.leftDriveInvert,
+		// 		RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
 
-		SwerveModulePosition positions[] = { leftPod.getPodPosition(), rightPod.getPodPosition() };
+		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
+		for (int i = 0; i < pods.length; i++) {
+			positions[i] = pods[i].getPodPosition();
+		}
 
 		odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
 
@@ -94,8 +85,9 @@ public class TurdSwerve extends SubsystemBase {
 	}
 
 	public void setAmpLimit(int ampLimit) {
-		leftPod.setAmpLimit(ampLimit);
-		rightPod.setAmpLimit(ampLimit);
+		for (TurdPod pod : pods) {
+			pod.setAmpLimit(ampLimit);
+		}
 	}
 
 	public void resetOdometry(Pose2d pose) {
@@ -104,31 +96,37 @@ public class TurdSwerve extends SubsystemBase {
 	}
 
 	public SwerveModulePosition[] getModulePositions() {
-		SwerveModulePosition[] positions = { leftPod.getPodPosition(), rightPod.getPodPosition() };
-		return positions;
+		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
+		for (int i = 0; i < pods.length; i++) {
+			positions[i] = pods[i].getPodPosition();
+		}		return positions;
 	}
 
 	public void resetPods() {
 		resetGyro();
-		leftPod.resetPod();
-		rightPod.resetPod();
+		for (TurdPod pod : pods) {
+			pod.resetPod();
+		}
 
 		resetOdometry(new Pose2d(new Translation2d(8.0, 4.2), new Rotation2d()));
 	}
 
 	public void resetZero() {
-		leftPod.resetZero();
-		rightPod.resetZero();
+		for (TurdPod pod : pods) {
+			pod.resetZero();
+		}	
 	}
 
 	public void revertZero() {
-		leftPod.revertZero();
-		rightPod.revertZero();
+		for (TurdPod pod : pods) {
+			pod.revertZero();
+		}	
 	}
 
 	public void stop() {
-		leftPod.stop();
-		rightPod.stop();
+		for (TurdPod pod : pods) {
+			pod.stop();
+		}
 	}
 
 	public Rotation2d getGyro() {
@@ -155,9 +153,9 @@ public class TurdSwerve extends SubsystemBase {
 		if (manualTurn) {
 			targetAngle = getGyro().getRadians() + (chassisSpeeds.omegaRadiansPerSecond / 2.0); // TODO: magic number
 		}
-
-		leftPod.setPodState(states[0]);
-		rightPod.setPodState(states[1]);
+		for (int i = 0; i < pods.length; i++) {
+			pods[i].setPodState(states[i]);
+		}
 	}
 
 	@Override
