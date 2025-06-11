@@ -64,7 +64,7 @@ public class TurdSwerve extends SubsystemBase {
 
 
 		for (int i = 0; i < pods.length; i++) {
-			pods[i] = new TurdPod(RobotMap.Pods[i].encoderID, RobotMap.Pods[i].leftMotorID, RobotMap.Pods[i].rightMotorID, RobotMap.Pods[i].encoderOffset, RobotMap.pods.azimuthInvert, RobotMap.pods.ampLimit, RobotMap.pods.azimuthRadiansPerRotation, false/*REMOVETHIS*/, RobotMap.pods.rampRate, RobotMap.pods.azimuthkP, RobotMap.pods.azimuthkI, RobotMap.pods.azimuthkD, RobotMap.pods.azimuthkS, RobotMap.pods.maxOutput, 1/*REMOVE*/, false/*REMOVE*/, 10/*REMOVE*/, false, 0.2/*REMOVE*/);
+			pods[i] = new TurdPod(RobotMap.Pods[i].encoderID, RobotMap.Pods[i].leftMotorID, RobotMap.Pods[i].rightMotorID, RobotMap.pods.leftMotorInvert, RobotMap.pods.rightMotorInvert, RobotMap.Pods[i].encoderOffset, RobotMap.pods.encoderInvert, RobotMap.pods.ampLimit, RobotMap.pods.motorsBrake, RobotMap.pods.rampRate, RobotMap.pods.azimuthkP, RobotMap.pods.azimuthkI, RobotMap.pods.azimuthkD, RobotMap.pods.maxOutput);
 		}
 		// leftPod = new TurdPod(RobotMap.CAN_LeftAbsoluteEncoderID, RobotMap.leftAzimuthID, RobotMap.leftDriveID,
 		// 		RobotConfig.leftOffset, RobotMap.leftAzimuthInvert,
@@ -82,12 +82,6 @@ public class TurdSwerve extends SubsystemBase {
 		odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
 
 		// gyro.configAllSettings(new Pigeon2Configuration());
-	}
-
-	public void setAmpLimit(int ampLimit) {
-		for (TurdPod pod : pods) {
-			pod.setAmpLimit(ampLimit);
-		}
 	}
 
 	public void resetOdometry(Pose2d pose) {
@@ -114,12 +108,6 @@ public class TurdSwerve extends SubsystemBase {
 	public void resetZero() {
 		for (TurdPod pod : pods) {
 			pod.resetZero();
-		}	
-	}
-
-	public void revertZero() {
-		for (TurdPod pod : pods) {
-			pod.revertZero();
 		}	
 	}
 

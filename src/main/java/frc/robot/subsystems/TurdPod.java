@@ -34,22 +34,22 @@ public class TurdPod extends SubsystemBase {
 	// motor (defaults to true for initial application)
 	// boolean apply = true;
 
-	private final PIDController anglePID = new PIDController(0.1, 0, 0);
+	private final PIDController anglePID;
 
 
-	public TurdPod(int absoluteEncoderID, int azimuthID, int driveID, double absoluteEncoderOffset,
-			boolean azimuthInvert, int azimuthLimit, double azimuthRotationsPerRot, boolean azimuthBrake,
-			double azimuthRR, double kP, double kI, double kD, double FF, double maxOut, double ADMult,
-			boolean driveInvert, double driveLimit, boolean driveBrake, double driveRR) {
-		//TODO: add an invert for the encoder
+	public TurdPod(int absoluteEncoderID, int leftID, int rightID, boolean leftInvert, boolean rightInvert, double absoluteEncoderOffset,
+			boolean encoderInvert, int ampLimit, boolean brake,
+			double rampRate, double kP, double kI, double kD, double maxOut) {
 
-		leftMotor = makeMotor(driveID, driveInvert, driveBrake, driveLimit, driveRR, 1d, 1d, leftConfig);
-		rightMotor = makeMotor(driveID, driveInvert, driveBrake, driveLimit, driveRR, 1d, 1d, rightConfig);
+		leftMotor = makeMotor(leftID, leftInvert, brake, ampLimit, rampRate, 1d, 1d, leftConfig);
+		rightMotor = makeMotor(rightID, rightInvert, brake, ampLimit, rampRate, 1d, 1d, rightConfig);
 
 
 		encoder = new AnalogEncoder(absoluteEncoderID);
 		encoder.setInverted(false);	
 		this.offset = absoluteEncoderOffset;
+
+		anglePID = new PIDController(kP, kI, kD);
 
 
 		resetPod();
@@ -167,10 +167,9 @@ public class TurdPod extends SubsystemBase {
 		rightMotor.setControl(new DutyCycleOut(rightOutput));
 
 
+		
+
 		//i have no idea what this stuff down here is for honestly
-
-
-
 
 		// speed = Math.abs(state.speedMetersPerSecond) < .01 ? 0 : state.speedMetersPerSecond;
 

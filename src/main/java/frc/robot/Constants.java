@@ -39,10 +39,9 @@ public final class Constants {
 				this.encoderID = encoderID;
 				this.encoderOffset = encoderOffset;
 			}
-			public static final boolean azimuthInvert = false;
+			public static final boolean encoderInvert = false;
 			public static final boolean leftMotorInvert = false; 
 			public static final boolean rightMotorInvert = false; 
-			public static final boolean encoderInvert = false;
 
 			public static final double azimuthRadiansPerRotation = 1;
 
