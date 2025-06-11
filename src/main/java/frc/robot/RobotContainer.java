@@ -16,33 +16,35 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.ResetZeroes;
 import frc.robot.commands.RevertZeroes;
 import frc.robot.commands.TurdDrive;
-import frc.robot.constants.Constants;
+import frc.robot.Constants;
 import frc.robot.subsystems.TurdSwerve;
 
 public class RobotContainer {
 
-  public static final XboxController driverRaw = new XboxController(Constants.driverPort);
-  public static final CommandXboxController driverCommand = new CommandXboxController(Constants.driverPort);
-  public static final TurdSwerve swerve = new TurdSwerve();
-  
+	public static final XboxController driverRaw = new XboxController(Constants.driverPort);
+	public static final CommandXboxController driverCommand = new CommandXboxController(Constants.driverPort);
+	public static final TurdSwerve swerve = new TurdSwerve();
 
-  public RobotContainer() {
-    final var Odometry = Shuffleboard.getTab("Odometry");
-    configureBindings();
-    Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(driverRaw.getRightX(), driverRaw.getRightY());
-    Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(driverRaw.getLeftX(), driverRaw.getLeftY());
-    Supplier<Integer> DPAD = () -> driverRaw.getPOV();
-    swerve.setDefaultCommand(new TurdDrive(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumper));
-    swerve.addDashboardWidgets(Odometry);
-  }
+	public RobotContainer() {
+		final var Odometry = Shuffleboard.getTab("Odometry");
+		configureBindings();
+		Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(driverRaw.getRightX(),
+				driverRaw.getRightY());
+		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(driverRaw.getLeftX(),
+				driverRaw.getLeftY());
+		Supplier<Integer> DPAD = () -> driverRaw.getPOV();
+		swerve.setDefaultCommand(
+				new TurdDrive(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumper));
+		swerve.addDashboardWidgets(Odometry);
+	}
 
-  private void configureBindings() {
-    driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
-    driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));
-    driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
-  }
+	private void configureBindings() {
+		driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
+		driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));
+		driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
+	}
 
-    public Command getAutonomousCommand() {
-        return Commands.print("No autonomous command configured");
-    }
+	public Command getAutonomousCommand() {
+		return Commands.print("No autonomous command configured");
+	}
 }

@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import com.ctre.phoenix6.hardware.Pigeon2;
+
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -22,156 +24,171 @@ import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.constants.Constants.RobotMap;
-import frc.robot.constants.Constants.RobotConfig;
+import frc.robot.Constants.RobotMap;
+import frc.robot.Constants.RobotConfig;
 
-
-/**REV Turdswerve implementation */
+/** REV Turdswerve implementation */
 public class TurdSwerve extends SubsystemBase {
-    private final Pigeon2 gyro;
+	private final Pigeon2 gyro;
 
-    private final TurdPod leftPod;
-    private final TurdPod rightPod;
-    
-    private final SwerveDriveOdometry odometer;
+	private final TurdPod leftPod;
+	private final TurdPod rightPod;
 
-    private ShuffleboardTab tab = Shuffleboard.getTab("PID");
-    private GenericEntry azimuthP;
-    private GenericEntry azimuthI;
-    private GenericEntry azimuthD;
-    private GenericEntry azimuthkS;
-    private GenericEntry ADMult;
+	private final SwerveDriveOdometry odometer;
 
-    private PIDController gyroPID;
-    public double targetAngle = 0;
-    private double odoAngleOffset = Math.PI * 0.0;
+	private ShuffleboardTab tab = Shuffleboard.getTab("PID");
+	private GenericEntry azimuthP;
+	private GenericEntry azimuthI;
+	private GenericEntry azimuthD;
+	private GenericEntry azimuthkS;
+	private GenericEntry ADMult;
 
-    private Rotation2d gyroResetAngle = new Rotation2d();
-    
-    private SwerveDriveKinematics drivetrainKinematics;
-    private final double robotMaxSpeed;
-    
-    private final Field2d field2d = new Field2d();
+	private PIDController gyroPID;
+	public double targetAngle = 0;
+	private double odoAngleOffset = Math.PI * 0.0;
 
-    public TurdSwerve() {      
-        
-        this.gyroPID = RobotConfig.gyroPID;
-        this.drivetrainKinematics = RobotConfig.drivetrainKinematics;
-        this.robotMaxSpeed = RobotConfig.robotMaxSpeed;
-        gyroPID.enableContinuousInput(0.0, 2*Math.PI);
-        
-        gyro = new Pigeon2(RobotMap.pigeonID);
-        gyroPID.enableContinuousInput(0.0, 2*Math.PI);
-        
-        azimuthP = tab.add("azimuth P", RobotConfig.azimuthkP).getEntry();
-        azimuthI = tab.add("azimuth I", RobotConfig.azimuthkI).getEntry();
-        azimuthD = tab.add("azimuth D", RobotConfig.azimuthkD).getEntry();
-        // change wildcard gain dependent on pod type
-        azimuthkS = tab.add("azimuth kS", RobotConfig.azimuthkS).getEntry();
-        ADMult = tab.add("Drive Speed Multiplier", RobotConfig.azimuthDriveSpeedMultiplier).getEntry();
-        
-        leftPod = new TurdPod(RobotMap.CAN_LeftAbsoluteEncoderID, RobotMap.leftAzimuthID, RobotMap.leftDriveID, RobotConfig.leftOffset, RobotMap.leftAzimuthInvert, 
-            RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake, RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP, 
-            RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput, RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.leftDriveInvert, 
-            RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
-        rightPod = new TurdPod(RobotMap.CAN_RightAbsoluteEncoderID, RobotMap.rightAzimuthID, RobotMap.rightDriveID, RobotConfig.rightOffset, RobotMap.rightAzimuthInvert, 
-            RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake, RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP, 
-            RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput, RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.rightDriveInvert, 
-            RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
+	private Rotation2d gyroResetAngle = new Rotation2d();
 
-        SwerveModulePosition positions[] = {leftPod.getPodPosition(), rightPod.getPodPosition()};
+	private SwerveDriveKinematics drivetrainKinematics;
+	private final double robotMaxSpeed;
 
-        odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
+	private final Field2d field2d = new Field2d();
 
+	public TurdSwerve() {
 
-        // gyro.configAllSettings(new Pigeon2Configuration());
-    }
+		this.gyroPID = RobotConfig.gyroPID;
+		this.drivetrainKinematics = RobotConfig.drivetrainKinematics;
+		this.robotMaxSpeed = RobotConfig.robotMaxSpeed;
+		gyroPID.enableContinuousInput(0.0, 2 * Math.PI);
 
-    public void setAmpLimit(int ampLimit) {
-        leftPod.setAmpLimit(ampLimit);
-        rightPod.setAmpLimit(ampLimit);
-    }
+		gyro = new Pigeon2(RobotMap.pigeonID);
+		gyroPID.enableContinuousInput(0.0, 2 * Math.PI);
 
-    public void resetOdometry(Pose2d pose) {
-        odoAngleOffset = DriverStation.getAlliance().get() == Alliance.Red ? Math.PI * 0.5 : Math.PI * 1.5;
-        odometer.resetPosition(new Rotation2d(odoAngleOffset), getModulePositions(), pose);
-    }
+		azimuthP = tab.add("azimuth P", RobotConfig.azimuthkP).getEntry();
+		azimuthI = tab.add("azimuth I", RobotConfig.azimuthkI).getEntry();
+		azimuthD = tab.add("azimuth D", RobotConfig.azimuthkD).getEntry();
+		// change wildcard gain dependent on pod type
+		azimuthkS = tab.add("azimuth kS", RobotConfig.azimuthkS).getEntry();
+		ADMult = tab.add("Drive Speed Multiplier", RobotConfig.azimuthDriveSpeedMultiplier).getEntry();
 
-    public SwerveModulePosition[] getModulePositions() {
-        SwerveModulePosition[] positions = {leftPod.getPodPosition(), rightPod.getPodPosition()};
-        return positions;
-    }
+		leftPod = new TurdPod(RobotMap.CAN_LeftAbsoluteEncoderID, RobotMap.leftAzimuthID, RobotMap.leftDriveID,
+				RobotConfig.leftOffset, RobotMap.leftAzimuthInvert,
+				RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake,
+				RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP,
+				RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput,
+				RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.leftDriveInvert,
+				RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
+		rightPod = new TurdPod(RobotMap.CAN_RightAbsoluteEncoderID, RobotMap.rightAzimuthID, RobotMap.rightDriveID,
+				RobotConfig.rightOffset, RobotMap.rightAzimuthInvert,
+				RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake,
+				RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP,
+				RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput,
+				RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.rightDriveInvert,
+				RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
 
-    public void resetPods() {
-        resetGyro();
-        leftPod.resetPod();
-        rightPod.resetPod();
-        
-        resetOdometry(new Pose2d(new Translation2d(8.0, 4.2), new Rotation2d()));
-    }
+		SwerveModulePosition positions[] = { leftPod.getPodPosition(), rightPod.getPodPosition() };
 
-    public void resetZero() {
-        leftPod.resetZero();
-        rightPod.resetZero();
-    }
+		odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
 
-    public void revertZero() {
-        leftPod.revertZero();
-        rightPod.revertZero();
-    }
+		// gyro.configAllSettings(new Pigeon2Configuration());
+	}
 
-    public void stop() {
-        leftPod.stop();
-        rightPod.stop();
-    }
+	public void setAmpLimit(int ampLimit) {
+		leftPod.setAmpLimit(ampLimit);
+		rightPod.setAmpLimit(ampLimit);
+	}
 
-    public Rotation2d getGyro() {
-        return new Rotation2d(-gyro.getAngle()*Math.PI/180).minus(gyroResetAngle);
-    }
+	public void resetOdometry(Pose2d pose) {
+		odoAngleOffset = DriverStation.getAlliance().get() == Alliance.Red ? Math.PI * 0.5 : Math.PI * 1.5;
+		odometer.resetPosition(new Rotation2d(odoAngleOffset), getModulePositions(), pose);
+	}
 
-    public void resetGyro() {
-        gyroResetAngle = getGyro().plus(gyroResetAngle);
-        targetAngle = 0;
-    }
-    
-    public void setRobotSpeeds(ChassisSpeeds chassisSpeeds) {
-        boolean manualTurn = true; //Math.abs(chassisSpeeds.omegaRadiansPerSecond) > 0.1;
+	public SwerveModulePosition[] getModulePositions() {
+		SwerveModulePosition[] positions = { leftPod.getPodPosition(), rightPod.getPodPosition() };
+		return positions;
+	}
 
-        chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds.vxMetersPerSecond, chassisSpeeds.vyMetersPerSecond,
-        manualTurn ? chassisSpeeds.omegaRadiansPerSecond * 3.0 : //TODO: magic number, please remove
-        gyroPID.calculate(getGyro().getRadians(), targetAngle), getGyro());
+	public void resetPods() {
+		resetGyro();
+		leftPod.resetPod();
+		rightPod.resetPod();
 
-        SwerveModuleState[] states = drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
-        SwerveDriveKinematics.desaturateWheelSpeeds(states, robotMaxSpeed);
-        
-        if (manualTurn) {
-            targetAngle = getGyro().getRadians() + (chassisSpeeds.omegaRadiansPerSecond / 2.0); //TODO: magic number
-        }
+		resetOdometry(new Pose2d(new Translation2d(8.0, 4.2), new Rotation2d()));
+	}
 
-        leftPod.setPodState(states[0]);
-        rightPod.setPodState(states[1]);
-    }
+	public void resetZero() {
+		leftPod.resetZero();
+		rightPod.resetZero();
+	}
 
-    @Override
-    public void periodic() {
-        odometer.update(getGyro(), getModulePositions());
-        SmartDashboard.putNumber("pigeon", getGyro().getDegrees());
-        field2d.setRobotPose(odometer.getPoseMeters().transformBy(new Transform2d(new Translation2d(), new Rotation2d(odoAngleOffset + Math.PI))));
+	public void revertZero() {
+		leftPod.revertZero();
+		rightPod.revertZero();
+	}
 
-        //uncomment these lines for azimuth tuning
-        // leftPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS), azimuthP.getDouble(SkywarpConfig.azimuthkP), azimuthI.getDouble(SkywarpConfig.azimuthkI), azimuthD.getDouble(SkywarpConfig.azimuthkD), 1, ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
-        // rightPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS), azimuthP.getDouble(SkywarpConfig.azimuthkP), azimuthI.getDouble(SkywarpConfig.azimuthkI), azimuthD.getDouble(SkywarpConfig.azimuthkD), 1, ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
-    }
-    
-    private String getFomattedPose() {
-        var pose = odometer.getPoseMeters();
-        return String.format(
-                        "(%.3f, %.3f) %.2f degrees",
-                        pose.getX(), pose.getY(), pose.getRotation().plus(new Rotation2d(odoAngleOffset)).getDegrees());
-    }
-    
-    public void addDashboardWidgets(ShuffleboardTab tab) {
-        tab.add("Field", field2d).withPosition(0, 0).withSize(6, 4);
-        tab.addString("Pose", this::getFomattedPose).withPosition(6, 2).withSize(2, 1);
-    }
+	public void stop() {
+		leftPod.stop();
+		rightPod.stop();
+	}
+
+	public Rotation2d getGyro() {
+		return new Rotation2d(-gyro.getAngle() * Math.PI / 180).minus(gyroResetAngle);
+	}
+
+	public void resetGyro() {
+		gyroResetAngle = getGyro().plus(gyroResetAngle);
+		targetAngle = 0;
+	}
+
+	public void setRobotSpeeds(ChassisSpeeds chassisSpeeds) {
+		boolean manualTurn = true; // Math.abs(chassisSpeeds.omegaRadiansPerSecond) > 0.1;
+
+		chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds.vxMetersPerSecond,
+				chassisSpeeds.vyMetersPerSecond,
+				manualTurn ? chassisSpeeds.omegaRadiansPerSecond * 3.0 : // TODO: magic number, please remove
+						gyroPID.calculate(getGyro().getRadians(), targetAngle),
+				getGyro());
+
+		SwerveModuleState[] states = drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
+		SwerveDriveKinematics.desaturateWheelSpeeds(states, robotMaxSpeed);
+
+		if (manualTurn) {
+			targetAngle = getGyro().getRadians() + (chassisSpeeds.omegaRadiansPerSecond / 2.0); // TODO: magic number
+		}
+
+		leftPod.setPodState(states[0]);
+		rightPod.setPodState(states[1]);
+	}
+
+	@Override
+	public void periodic() {
+		odometer.update(getGyro(), getModulePositions());
+		SmartDashboard.putNumber("pigeon", getGyro().getDegrees());
+		field2d.setRobotPose(odometer.getPoseMeters()
+				.transformBy(new Transform2d(new Translation2d(), new Rotation2d(odoAngleOffset + Math.PI))));
+
+		// uncomment these lines for azimuth tuning
+		// leftPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS),
+		// azimuthP.getDouble(SkywarpConfig.azimuthkP),
+		// azimuthI.getDouble(SkywarpConfig.azimuthkI),
+		// azimuthD.getDouble(SkywarpConfig.azimuthkD), 1,
+		// ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
+		// rightPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS),
+		// azimuthP.getDouble(SkywarpConfig.azimuthkP),
+		// azimuthI.getDouble(SkywarpConfig.azimuthkI),
+		// azimuthD.getDouble(SkywarpConfig.azimuthkD), 1,
+		// ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
+	}
+
+	private String getFomattedPose() {
+		var pose = odometer.getPoseMeters();
+		return String.format(
+				"(%.3f, %.3f) %.2f degrees",
+				pose.getX(), pose.getY(), pose.getRotation().plus(new Rotation2d(odoAngleOffset)).getDegrees());
+	}
+
+	public void addDashboardWidgets(ShuffleboardTab tab) {
+		tab.add("Field", field2d).withPosition(0, 0).withSize(6, 4);
+		tab.addString("Pose", this::getFomattedPose).withPosition(6, 2).withSize(2, 1);
+	}
 }
