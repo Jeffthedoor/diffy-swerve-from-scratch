@@ -42,7 +42,7 @@ public class RobotContainer {
     driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
   }
 
-  public Command getAutonomousCommand() {
-    return Commands.print("No autonomous command configured");
-  }
+    public Command getAutonomousCommand() {
+        return Commands.print("No autonomous command configured");
+    }
 }
