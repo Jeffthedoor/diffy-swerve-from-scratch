@@ -1,0 +1,55 @@
+// Copyright (c) FIRST and other WPILib contributors.
+// Open Source Software; you can modify and/or share it under the terms of
+// the WPILib BSD license file in the root directory of this project.
+
+package frc.robot.commands;
+
+import java.util.function.Supplier;
+
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.subsystems.DIffySwerve;
+import frc.robot.subsystems.DrivePod;
+
+public class PointPods extends Command {
+
+	DIffySwerve swerve;
+	Supplier<Translation2d> joystickRight;
+
+	public PointPods(DIffySwerve swerve, Supplier<Translation2d> joystickRight, Supplier<Boolean> boost) {
+		this.swerve = swerve;
+		this.joystickRight = joystickRight;
+		addRequirements(swerve);
+	}
+
+	// Called when the command is initially scheduled.
+	@Override
+	public void initialize() {
+	}
+
+	// Called every time the scheduler runs while the command is scheduled.
+	@Override
+	public void execute() {
+
+		Rotation2d angle = joystickRight.get().getAngle().plus(Rotation2d.kCCW_90deg).times(-1); // TODO: test if this offset is correct
+		SwerveModuleState state = new SwerveModuleState(0, angle);
+		for (DrivePod pod : swerve.getPods()) {
+			pod.setPodState(state);
+		}
+
+	}
+
+	// Called once the command ends or is interrupted.
+	@Override
+	public void end(boolean interrupted) {
+		swerve.stop();
+	}
+
+	// Returns true when the command should end.
+	@Override
+	public boolean isFinished() {
+		return false;
+	}
+}
