@@ -15,6 +15,8 @@ public final class Constants {
 
 	/** CAN ID, Invert, Pod Positions, Offsets, Conversion Rates */
 	public final class RobotMap {
+		public static final double podRotationUpperBound = 0.4;
+		public static final double podRotationLowerBound = -0.4; // TODO: Double check with CAD
 		public static final double driveMetersPerMotorRotation = Units.inchesToMeters(2) * Math.PI / 1 / 0.36; // Wheel
 																												// Diameter
 																												// M *

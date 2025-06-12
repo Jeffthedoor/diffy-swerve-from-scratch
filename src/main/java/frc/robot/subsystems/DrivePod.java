@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.RobotMap;
 
 /** This is a sample pod that uses a CANcoder and TalonFXes. */
 public class DrivePod extends SubsystemBase {
@@ -144,17 +145,30 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public void setPodState(SwerveModuleState state) {
-		state.optimize(Rotation2d.fromRotations(getAngle())); // optimize the state to the current angle
+		// make sure pod is inside of possible rotation zone
+		while (state.angle.getRotations() > 1) {
+			state = new SwerveModuleState(state.speedMetersPerSecond, state.angle.minus(Rotation2d.k180deg.plus(Rotation2d.k180deg)));
+		} 
+		while (state.angle.getRotations() < -1) {
+			state = new SwerveModuleState(state.speedMetersPerSecond, state.angle.plus(Rotation2d.k180deg.plus(Rotation2d.k180deg)));
+		} 
+		while (state.angle.getRotations() > RobotMap.podRotationUpperBound) {
+			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.minus(Rotation2d.k180deg));
+		} 
+		while (state.angle.getRotations() < RobotMap.podRotationLowerBound) {
+			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.plus(Rotation2d.k180deg));
+		} 
 
+		// TODO: optimize pod target heading based on current heading
 
-		double heading = anglePID.calculate(getAngle(), state.angle.getRotations());
+		//initialize outputs to raw speed
+		double leftOutput = state.speedMetersPerSecond; 
+		double rightOutput = state.speedMetersPerSecond; 
 
-		double leftOutput = state.speedMetersPerSecond; //initialize outputs to raw speed
-		double rightOutput = state.speedMetersPerSecond; //initialize outputs to raw speed
-
-		//adjust outputs based on the heading
-		leftOutput -= heading;
-		rightOutput += heading;
+		//adjust outputs based on the PID Controller
+		double correction = anglePID.calculate(getAngle(), state.angle.getRotations());
+		leftOutput -= correction;
+		rightOutput += correction;
 
 		//normalize outputs to be between -1 and 1
 		double maxOutput = Math.max(Math.abs(leftOutput), Math.abs(rightOutput));
