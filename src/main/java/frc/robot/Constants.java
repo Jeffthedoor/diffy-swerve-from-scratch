@@ -8,6 +8,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Constants.RobotMap.PodConfig;
 
 /** Add your docs here. */
 public final class Constants {
@@ -43,7 +44,7 @@ public final class Constants {
 			public static final boolean leftMotorInvert = false; 
 			public static final boolean rightMotorInvert = false; 
 
-			public static final double azimuthRadiansPerRotation = 1;
+			public static final double motorGearing = 50;
 
 			public static final boolean motorsBrake = true;
 			public static final int ampLimit = 80;
@@ -81,6 +82,15 @@ public final class Constants {
 		
 
 		public static final double robotMaxSpeed = 3.99; // meters per second
+
+	}
+
+	public final class SimConstants {
+		public static final double inertia = 31.605; // kg*m^2
+		public static final double mass = 226; // kg, approximate mass of the robot
+		public static final double wheelRadius = 0.3; // meters
+		public static final double trackWidth = 0.5; // meters, distance between left and right wheels
+		public static final double gearRatio = PodConfig.motorGearing; // gear ratio of the drivetrain
 
 	}
 }

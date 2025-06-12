@@ -65,7 +65,7 @@ public class DIffySwerve extends SubsystemBase {
 
 
 		for (int i = 0; i < pods.length; i++) {
-			pods[i] = new DrivePod(RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, PodConfig.maxOutput);
+			pods[i] = new DrivePod(RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, PodConfig.maxOutput, PodConfig.motorGearing);
 		}
 		
 		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
