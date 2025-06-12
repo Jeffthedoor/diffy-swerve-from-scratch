@@ -5,18 +5,22 @@
 package frc.robot.subsystems;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.sim.Pigeon2SimState;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.GenericEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -26,10 +30,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.RobotMap;
 import frc.robot.Constants.RobotMap.PodConfig;
+import frc.robot.Robot;
+import frc.robot.Constants;
 import frc.robot.Constants.RobotConfig;
 
 public class DIffySwerve extends SubsystemBase {
 	private final Pigeon2 gyro;
+
+	private Pigeon2SimState gyroSimState;
 
 	private final DrivePod[] pods = new DrivePod[4];
 
@@ -52,6 +60,8 @@ public class DIffySwerve extends SubsystemBase {
 	private final double robotMaxSpeed;
 
 	private final Field2d field2d = new Field2d();
+
+	StructArrayPublisher<SwerveModuleState> SMSPublisher;
 
 	public DIffySwerve() {
 
@@ -76,6 +86,11 @@ public class DIffySwerve extends SubsystemBase {
 		odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
 
 		// gyro.configAllSettings(new Pigeon2Configuration());
+
+		SMSPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
+		if(Robot.isSimulation()) {
+			gyroSimState = new Pigeon2SimState(gyro);
+		}
 	}
 
 	public void resetOdometry(Pose2d pose) {
@@ -87,6 +102,13 @@ public class DIffySwerve extends SubsystemBase {
 		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
 		for (int i = 0; i < pods.length; i++) {
 			positions[i] = pods[i].getPodPosition();
+		}		return positions;
+	}
+
+	public SwerveModuleState[] getModuleStates() {
+		SwerveModuleState positions[] = new SwerveModuleState[pods.length];
+		for (int i = 0; i < pods.length; i++) {
+			positions[i] = pods[i].getState();
 		}		return positions;
 	}
 
@@ -113,7 +135,7 @@ public class DIffySwerve extends SubsystemBase {
 	}
 
 	public Rotation2d getGyro() {
-		return new Rotation2d(-gyro.getAngle() * Math.PI / 180).minus(gyroResetAngle);
+		return gyro.getRotation2d().minus(gyroResetAngle);
 	}
 
 	public void resetGyro() {
@@ -146,11 +168,21 @@ public class DIffySwerve extends SubsystemBase {
 	}
 
 	@Override
-	public void periodic() {
+	public void simulationPeriodic() {
+		gyroSimState.setAngularVelocityZ(RobotConfig.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond);
+	}
+
+	@Override
+	public void periodic() {	
+
 		odometer.update(getGyro(), getModulePositions());
 		SmartDashboard.putNumber("pigeon", getGyro().getDegrees());
 		field2d.setRobotPose(odometer.getPoseMeters()
 				.transformBy(new Transform2d(new Translation2d(), new Rotation2d(odoAngleOffset + Math.PI))));
+
+		SMSPublisher.accept(getModuleStates());
+
+
 
 		// uncomment these lines for azimuth tuning
 		// leftPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS),
@@ -164,6 +196,8 @@ public class DIffySwerve extends SubsystemBase {
 		// azimuthD.getDouble(SkywarpConfig.azimuthkD), 1,
 		// ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
 	}
+
+
 
 	private String getFomattedPose() {
 		var pose = odometer.getPoseMeters();
