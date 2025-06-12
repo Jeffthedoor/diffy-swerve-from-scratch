@@ -14,7 +14,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.ResetZeroes;
-import frc.robot.commands.RevertZeroes;
+// import frc.robot.commands.RevertZeroes;
 import frc.robot.commands.TurdDrive;
 import frc.robot.Constants;
 import frc.robot.subsystems.TurdSwerve;
@@ -34,13 +34,13 @@ public class RobotContainer {
 				driverRaw.getLeftY());
 		Supplier<Integer> DPAD = () -> driverRaw.getPOV();
 		swerve.setDefaultCommand(
-				new TurdDrive(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumper));
+				new TurdDrive(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumperButton));
 		swerve.addDashboardWidgets(Odometry);
 	}
 
 	private void configureBindings() {
 		driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
-		driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));
+		// driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));
 		driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
 	}
 

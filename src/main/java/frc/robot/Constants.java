@@ -28,12 +28,12 @@ public final class Constants {
 
 		public static final int pigeonID = 25;
 
-		public final class pods {
+		public static final class PodConfig {
 			public final int leftMotorID;
 			public final int rightMotorID;
 			public final int encoderID;
 			public final double encoderOffset;
-			public pods(int leftMotorID, int rightMotorID, int encoderID, double encoderOffset) {
+			public PodConfig(int leftMotorID, int rightMotorID, int encoderID, double encoderOffset) {
 				this.leftMotorID = leftMotorID;
 				this.rightMotorID = rightMotorID;
 				this.encoderID = encoderID;
@@ -55,25 +55,30 @@ public final class Constants {
 			public static final double azimuthkD = 0.001;
 			public static final double azimuthkS = 0.0;
 		}
-		public static final pods[] Pods = new pods[4];
-		{
-			Pods[0] = new pods(0, 1, 2, 0d);
-			Pods[1] = new pods(3, 4, 5, 0d);
-			Pods[2] = new pods(6, 7, 8, 0d);
-			Pods[3] = new pods(9, 10, 11, 0d);
-		}
+		public static final PodConfig[] PodConfigs = {
+			new PodConfig(0, 1, 0, 0d),
+			new PodConfig(3, 4, 1, 0d),
+			new PodConfig(6, 7, 2, 0d),
+			new PodConfig(9, 10, 3, 0d)
+		};
 	}
 
 	public final class RobotConfig {
 		public static final PIDController gyroPID = new PIDController(0.046, 0d, 0.001);
 
+		//TODO: get actual numbers for these
 		private static final double wheelBase = 5.75;
-		private static final Translation2d leftPodPosition = new Translation2d(-Units.inchesToMeters(wheelBase),
+		private static final Translation2d frontLeftPodPosition = new Translation2d(Units.inchesToMeters(wheelBase),
 				Units.inchesToMeters(wheelBase));
-		private static final Translation2d rightPodPosition = new Translation2d(Units.inchesToMeters(wheelBase),
+		private static final Translation2d frontRightPodPosition = new Translation2d(Units.inchesToMeters(wheelBase),
 				-Units.inchesToMeters(wheelBase));
-		public static final SwerveDriveKinematics drivetrainKinematics = new SwerveDriveKinematics(leftPodPosition,
-				rightPodPosition);
+		private static final Translation2d backLeftPodPosition = new Translation2d(-Units.inchesToMeters(wheelBase),
+				Units.inchesToMeters(wheelBase));
+		private static final Translation2d backRightPodPosition = new Translation2d(-Units.inchesToMeters(wheelBase),
+				-Units.inchesToMeters(wheelBase));
+		public static final SwerveDriveKinematics drivetrainKinematics = new SwerveDriveKinematics(
+				frontLeftPodPosition, frontRightPodPosition, backLeftPodPosition, backRightPodPosition);
+		
 
 		public static final double robotMaxSpeed = 3.99; // meters per second
 

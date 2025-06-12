@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.RobotMap;
+import frc.robot.Constants.RobotMap.PodConfig;
 import frc.robot.Constants.RobotConfig;
 
 public class TurdSwerve extends SubsystemBase {
@@ -64,16 +65,9 @@ public class TurdSwerve extends SubsystemBase {
 
 
 		for (int i = 0; i < pods.length; i++) {
-			pods[i] = new TurdPod(RobotMap.Pods[i].encoderID, RobotMap.Pods[i].leftMotorID, RobotMap.Pods[i].rightMotorID, RobotMap.pods.leftMotorInvert, RobotMap.pods.rightMotorInvert, RobotMap.Pods[i].encoderOffset, RobotMap.pods.encoderInvert, RobotMap.pods.ampLimit, RobotMap.pods.motorsBrake, RobotMap.pods.rampRate, RobotMap.pods.azimuthkP, RobotMap.pods.azimuthkI, RobotMap.pods.azimuthkD, RobotMap.pods.maxOutput);
+			pods[i] = new TurdPod(RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, PodConfig.maxOutput);
 		}
-		// leftPod = new TurdPod(RobotMap.CAN_LeftAbsoluteEncoderID, RobotMap.leftAzimuthID, RobotMap.leftDriveID,
-		// 		RobotConfig.leftOffset, RobotMap.leftAzimuthInvert,
-		// 		RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake,
-		// 		RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP,
-		// 		RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput,
-		// 		RobotConfig.azimuthDriveSpeedMultiplier, RobotMap.leftDriveInvert,
-		// 		RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate);
-
+		
 		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
 		for (int i = 0; i < pods.length; i++) {
 			positions[i] = pods[i].getPodPosition();
@@ -102,6 +96,7 @@ public class TurdSwerve extends SubsystemBase {
 			pod.resetPod();
 		}
 
+		//TODO: wtf hardcoded??
 		resetOdometry(new Pose2d(new Translation2d(8.0, 4.2), new Rotation2d()));
 	}
 
