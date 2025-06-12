@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** This is a sample pod that uses a CANcoder and TalonFXes. */
-public class TurdPod extends SubsystemBase {
+public class DrivePod extends SubsystemBase {
 	// public Encoder absoluteEncoder;
 	public TalonFXS leftMotor;
 	public TalonFXS rightMotor;
@@ -37,7 +37,7 @@ public class TurdPod extends SubsystemBase {
 	private final PIDController anglePID;
 
 
-	public TurdPod(int absoluteEncoderID, int leftID, int rightID, boolean leftInvert, boolean rightInvert, double absoluteEncoderOffset,
+	public DrivePod(int absoluteEncoderID, int leftID, int rightID, boolean leftInvert, boolean rightInvert, double absoluteEncoderOffset,
 			boolean encoderInvert, int ampLimit, boolean brake,
 			double rampRate, double kP, double kI, double kD, double maxOut) {
 
@@ -167,7 +167,7 @@ public class TurdPod extends SubsystemBase {
 		rightMotor.setControl(new DutyCycleOut(rightOutput));
 
 
-		
+
 
 		//i have no idea what this stuff down here is for honestly
 

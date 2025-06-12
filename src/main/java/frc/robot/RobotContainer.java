@@ -15,15 +15,15 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.ResetZeroes;
 // import frc.robot.commands.RevertZeroes;
-import frc.robot.commands.TurdDrive;
+import frc.robot.commands.DriveCommand;
 import frc.robot.Constants;
-import frc.robot.subsystems.TurdSwerve;
+import frc.robot.subsystems.DIffySwerve;
 
 public class RobotContainer {
 
 	public static final XboxController driverRaw = new XboxController(Constants.driverPort);
 	public static final CommandXboxController driverCommand = new CommandXboxController(Constants.driverPort);
-	public static final TurdSwerve swerve = new TurdSwerve();
+	public static final DIffySwerve swerve = new DIffySwerve();
 
 	public RobotContainer() {
 		final var Odometry = Shuffleboard.getTab("Odometry");
@@ -34,7 +34,7 @@ public class RobotContainer {
 				driverRaw.getLeftY());
 		Supplier<Integer> DPAD = () -> driverRaw.getPOV();
 		swerve.setDefaultCommand(
-				new TurdDrive(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumperButton));
+				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumperButton));
 		swerve.addDashboardWidgets(Odometry);
 	}
 

@@ -28,10 +28,10 @@ import frc.robot.Constants.RobotMap;
 import frc.robot.Constants.RobotMap.PodConfig;
 import frc.robot.Constants.RobotConfig;
 
-public class TurdSwerve extends SubsystemBase {
+public class DIffySwerve extends SubsystemBase {
 	private final Pigeon2 gyro;
 
-	private final TurdPod[] pods = new TurdPod[4];
+	private final DrivePod[] pods = new DrivePod[4];
 
 	private final SwerveDriveOdometry odometer;
 
@@ -53,7 +53,7 @@ public class TurdSwerve extends SubsystemBase {
 
 	private final Field2d field2d = new Field2d();
 
-	public TurdSwerve() {
+	public DIffySwerve() {
 
 		this.gyroPID = RobotConfig.gyroPID;
 		this.drivetrainKinematics = RobotConfig.drivetrainKinematics;
@@ -65,7 +65,7 @@ public class TurdSwerve extends SubsystemBase {
 
 
 		for (int i = 0; i < pods.length; i++) {
-			pods[i] = new TurdPod(RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, PodConfig.maxOutput);
+			pods[i] = new DrivePod(RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, PodConfig.maxOutput);
 		}
 		
 		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
@@ -92,7 +92,7 @@ public class TurdSwerve extends SubsystemBase {
 
 	public void resetPods() {
 		resetGyro();
-		for (TurdPod pod : pods) {
+		for (DrivePod pod : pods) {
 			pod.resetPod();
 		}
 
@@ -101,13 +101,13 @@ public class TurdSwerve extends SubsystemBase {
 	}
 
 	public void resetZero() {
-		for (TurdPod pod : pods) {
+		for (DrivePod pod : pods) {
 			pod.resetZero();
 		}	
 	}
 
 	public void stop() {
-		for (TurdPod pod : pods) {
+		for (DrivePod pod : pods) {
 			pod.stop();
 		}
 	}
