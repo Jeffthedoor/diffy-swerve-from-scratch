@@ -180,6 +180,11 @@ public class DrivePod extends SubsystemBase {
 		// error *= 180 / Math.PI;
 	}
 
+	public void setRotationalSpeed(double speed) {
+		leftMotor.set(speed);
+		rightMotor.set(-speed);
+	}
+
 	@Override
 	public void periodic() {
 		// TODO: dont use smartdashboard

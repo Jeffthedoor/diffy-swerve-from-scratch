@@ -141,6 +141,10 @@ public class DIffySwerve extends SubsystemBase {
 		}
 	}
 
+	public DrivePod[] getPods() {
+		return pods;
+	}
+
 	@Override
 	public void periodic() {
 		odometer.update(getGyro(), getModulePositions());
