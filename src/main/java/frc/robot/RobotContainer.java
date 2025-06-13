@@ -29,7 +29,6 @@ public class RobotContainer {
 	public static final DiffySwerve swerve = new DiffySwerve();
 
 	public RobotContainer() {
-		final var Odometry = Shuffleboard.getTab("Odometry");
 		configureBindings();
 		Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(driverRaw.getRightX(),
 				driverRaw.getRightY());
@@ -38,7 +37,6 @@ public class RobotContainer {
 		Supplier<Integer> DPAD = () -> driverRaw.getPOV();
 		swerve.setDefaultCommand(
 				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumperButton));
-		swerve.addDashboardWidgets(Odometry);
 
 
 		// swerve.setDefaultCommand(new RunCommand(() -> swerve.getPods()[0].setPodState(new SwerveModuleState(driverRaw.getLeftY(), Rotation2d.fromDegrees(driverRaw.getPOV() == -1 ? 0 : driverRaw.getPOV()))), swerve));

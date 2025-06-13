@@ -7,10 +7,15 @@ package frc.robot.subsystems;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 
+import org.photonvision.EstimatedRobotPose;
+
+import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
 
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -46,6 +51,7 @@ public class DiffySwerve extends SubsystemBase {
 	private final DrivePod[] pods = new DrivePod[4];
 
 	private final SwerveDriveOdometry odometer;
+	private final SwerveDrivePoseEstimator poseEstimator;
 
 	private ShuffleboardTab tab = Shuffleboard.getTab("PID");
 	private GenericEntry azimuthP;
@@ -70,7 +76,6 @@ public class DiffySwerve extends SubsystemBase {
 	StructPublisher<ChassisSpeeds> ChassisSpeedsPublisher;
 
 	public DiffySwerve() {
-
 		this.gyroPID = RobotConfig.gyroPID;
 		this.drivetrainKinematics = RobotMap.drivetrainKinematics;
 		this.robotMaxSpeed = RobotConfig.robotMaxSpeed;
@@ -90,6 +95,11 @@ public class DiffySwerve extends SubsystemBase {
 		}
 
 		odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
+		poseEstimator = new SwerveDrivePoseEstimator(
+					drivetrainKinematics,
+					getGyro(),
+					getModulePositions(),
+					new Pose2d());
 
 		// gyro.configAllSettings(new Pigeon2Configuration());
 
@@ -216,15 +226,7 @@ public class DiffySwerve extends SubsystemBase {
 				.orElse(0);
 	}
 
-	private String getFomattedPose() {
-		var pose = odometer.getPoseMeters();
-		return String.format(
-				"(%.3f, %.3f) %.2f degrees",
-				pose.getX(), pose.getY(), pose.getRotation().plus(new Rotation2d(odoAngleOffset)).getDegrees());
-	}
-
-	public void addDashboardWidgets(ShuffleboardTab tab) {
-		tab.add("Field", field2d).withPosition(0, 0).withSize(6, 4);
-		tab.addString("Pose", this::getFomattedPose).withPosition(6, 2).withSize(2, 1);
+	public void addVisionMeasurement(EstimatedRobotPose visionPose, double distance) {
+		poseEstimator.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), Utils.fpgaToCurrentTime(visionPose.timestampSeconds), VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 	}
 }
