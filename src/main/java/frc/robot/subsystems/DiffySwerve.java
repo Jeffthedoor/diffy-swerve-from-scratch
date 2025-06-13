@@ -160,10 +160,21 @@ public class DiffySwerve extends SubsystemBase {
 
 		SwerveModuleState[] states = drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
 		SwerveDriveKinematics.desaturateWheelSpeeds(states, robotMaxSpeed);
-
-		
-		for (int i = 0; i < pods.length; i++) {
-			pods[i].setPodState(states[i]);
+		if (isTurning()) {
+			// if (isMoving()) {
+				// for (int i = 0; i < pods.length; i++) {
+				// 	pods[i].point(pods[i].getState().angle); // TODO: jank fix revise later also crashes the sim idk why
+				// 	// pods[i].setPodState(new SwerveModuleState(0, pods[i].getState().angle)); // stop driving and don't change the azimuth angle; doesn't work because it changes the pod's "target angle" which disables "isTurning()" check
+				// }
+			// } else {
+				for (int i = 0; i < pods.length; i++) {
+					pods[i].setPodState(new SwerveModuleState(0, states[i].angle)); // stop driving, but correct the azimuth angle
+				}
+			// }
+		} else {
+			for (int i = 0; i < pods.length; i++) {
+				pods[i].setPodState(states[i]);
+			}
 		}
 	}
 
@@ -226,5 +237,23 @@ public class DiffySwerve extends SubsystemBase {
 	public void addDashboardWidgets(ShuffleboardTab tab) {
 		tab.add("Field", field2d).withPosition(0, 0).withSize(6, 4);
 		tab.addString("Pose", this::getFomattedPose).withPosition(6, 2).withSize(2, 1);
+	}
+
+	private boolean isTurning() {
+		for (DrivePod pod : pods) {
+			if (pod.isTurning()) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private boolean isMoving() {
+		for (DrivePod pod : pods) {
+			if (pod.isMoving()) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

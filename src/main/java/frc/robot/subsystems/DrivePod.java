@@ -49,7 +49,7 @@ public class DrivePod extends SubsystemBase {
 	private TalonFXS leftMotor;
 	private TalonFXS rightMotor;
 	private AnalogEncoder encoder;
-
+	private SwerveModuleState targetState = new SwerveModuleState();
 	private TalonFXSSimState leftMotorSim;
 	private TalonFXSSimState rightMotorSim;
 	private AnalogEncoderSim absoluteEncoderSim;
@@ -268,6 +268,10 @@ public class DrivePod extends SubsystemBase {
 				Rotation2d.fromRotations(getAngle()));
 	}
 
+	public void point(Rotation2d angle) {
+		setPodState(new SwerveModuleState(0, angle));
+	}
+
 	public void setPodState(SwerveModuleState state) {
 		// optimize pod target heading based on current heading
 		while (state.angle.getRotations() - getState().angle.getRotations() > 0.25) {
@@ -284,7 +288,7 @@ public class DrivePod extends SubsystemBase {
 			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.plus(Rotation2d.k180deg));
 		} 
 
-
+		targetState = state;
 		//initialize outputs to raw speed
 		double leftOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed; 
 		double rightOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed;; 
@@ -352,6 +356,14 @@ public class DrivePod extends SubsystemBase {
 	@Override
 	public void periodic() {
 		updateLogging();
+	}
+
+	public boolean isTurning() {
+		return Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.1;
+	}
+
+	public boolean isMoving() {
+		return Math.abs(getState().speedMetersPerSecond) > 1.0;
 	}
 
 	@Override
