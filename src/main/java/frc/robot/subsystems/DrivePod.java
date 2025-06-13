@@ -4,29 +4,21 @@
 
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.RadiansPerSecond;
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
-import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFXS;
-import com.ctre.phoenix6.signals.ExternalFeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSSimState;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AnalogEncoder;
@@ -35,13 +27,13 @@ import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
-import frc.robot.Constants.SimConstants;
 import frc.robot.Constants.RobotConfig;
 import frc.robot.Constants.RobotMap;
+import frc.robot.Constants.SimConstants;
+import frc.robot.util.TunableNumber;
+import frc.robot.Constants;
+import frc.robot.Robot;
 
 /** This is a sample pod that uses a CANcoder and TalonFXes. */
 public class DrivePod extends SubsystemBase {
@@ -72,10 +64,6 @@ public class DrivePod extends SubsystemBase {
 
 	TalonFXSConfiguration leftConfig = new TalonFXSConfiguration();
 	TalonFXSConfiguration rightConfig = new TalonFXSConfiguration();
-
-	// variable that determines whether or not to apply PID configurations to the
-	// motor (defaults to true for initial application)
-	// boolean apply = true;
 
 	private final PIDController anglePID;
 
@@ -270,6 +258,11 @@ public class DrivePod extends SubsystemBase {
 
 	public void point(Rotation2d angle) {
 		setPodState(optimizePodHeading(new SwerveModuleState(0, angle)));
+	}
+
+
+	public void setPID(double kP, double kI, double kD) {
+		anglePID.setPID(kP, kI, kD);
 	}
 
 	public SwerveModuleState optimizePodHeading(SwerveModuleState state) {

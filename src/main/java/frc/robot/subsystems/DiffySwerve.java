@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.DoubleSupplier;
 
@@ -39,6 +40,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.RobotMap;
 import frc.robot.Constants.RobotMap.PodConfig;
+import frc.robot.util.TunableNumber;
 import frc.robot.Robot;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotConfig;
@@ -48,19 +50,15 @@ public class DiffySwerve extends SubsystemBase {
 
 	private Pigeon2SimState gyroSimState;
 
-	private final DrivePod[] pods = new DrivePod[4];
+	private final ArrayList<DrivePod> pods = new ArrayList<DrivePod>();
 
 	private final SwerveDriveOdometry odometer;
 	private final SwerveDrivePoseEstimator poseEstimator;
 
-	private ShuffleboardTab tab = Shuffleboard.getTab("PID");
-	private GenericEntry azimuthP;
-	private GenericEntry azimuthI;
-	private GenericEntry azimuthD;
-	private GenericEntry azimuthkS;
-	private GenericEntry ADMult;
+	private TunableNumber azimuthkP = new TunableNumber("azimuthkP", PodConfig.kP, "PID");
+	private TunableNumber azimuthkI = new TunableNumber("azimuthkI", PodConfig.kI, "PID");
+	private TunableNumber azimuthkD = new TunableNumber("azimuthkD", PodConfig.kD, "PID");
 
-	private PIDController gyroPID;
 	public double targetAngle = 0;
 	private double odoAngleOffset = Math.PI * 0.0;
 
@@ -76,23 +74,19 @@ public class DiffySwerve extends SubsystemBase {
 	StructPublisher<ChassisSpeeds> ChassisSpeedsPublisher;
 
 	public DiffySwerve() {
-		this.gyroPID = RobotConfig.gyroPID;
 		this.drivetrainKinematics = RobotMap.drivetrainKinematics;
 		this.robotMaxSpeed = RobotConfig.robotMaxSpeed;
-		gyroPID.enableContinuousInput(0.0, 2 * Math.PI);
 
 		gyro = new Pigeon2(RobotMap.pigeonID);
-		gyroPID.enableContinuousInput(0.0, 2 * Math.PI);
 
 
-		for (int i = 0; i < pods.length; i++) {
-			pods[i] = new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, getGlobalOutputScalar(), PodConfig.motorGearing);
+		for (int i = 0; i < RobotMap.PodConfigs.length; i++) {
+			pods.add(new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, azimuthkP.doubleValue(), azimuthkI.doubleValue(), azimuthkD.doubleValue(), getGlobalOutputScalar(), PodConfig.motorGearing));
 		}
 		
-		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
-		for (int i = 0; i < pods.length; i++) {
-			positions[i] = pods[i].getPodPosition();
-		}
+		SwerveModulePosition positions[] = pods.stream()
+				.map(DrivePod::getPodPosition)
+				.toArray(SwerveModulePosition[]::new);
 
 		odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
 		poseEstimator = new SwerveDrivePoseEstimator(
@@ -118,17 +112,15 @@ public class DiffySwerve extends SubsystemBase {
 	}
 
 	public SwerveModulePosition[] getModulePositions() {
-		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
-		for (int i = 0; i < pods.length; i++) {
-			positions[i] = pods[i].getPodPosition();
-		}		return positions;
+		return pods.stream()
+				.map(DrivePod::getPodPosition)
+				.toArray(SwerveModulePosition[]::new);
 	}
 
 	public SwerveModuleState[] getModuleStates() {
-		SwerveModuleState positions[] = new SwerveModuleState[pods.length];
-		for (int i = 0; i < pods.length; i++) {
-			positions[i] = pods[i].getState();
-		}		return positions;
+		return pods.stream()
+				.map(DrivePod::getState)
+				.toArray(SwerveModuleState[]::new);
 	}
 
 	public void resetPods() {
@@ -177,19 +169,19 @@ public class DiffySwerve extends SubsystemBase {
 			// 		// pods[i].setPodState(new SwerveModuleState(0, pods[i].getState().angle)); // stop driving and don't change the azimuth angle; doesn't work because it changes the pod's "target angle" which disables "isTurning()" check
 			// 	}
 			// } else {
-				for (int i = 0; i < pods.length; i++) {
-					pods[i].setPodState(new SwerveModuleState(0, states[i].angle)); // stop driving, but correct the azimuth angle
+				for (int i = 0; i < pods.size(); i++) {
+					pods.get(i).setPodState(new SwerveModuleState(0, states[i].angle)); // stop driving, but correct the azimuth angle
 				}
 			// }
 		} else {
-			for (int i = 0; i < pods.length; i++) {
-				pods[i].setPodState(states[i]);
+			for (int i = 0; i < pods.size(); i++) {
+				pods.get(i).setPodState(states[i]);
 			}
 		}
 	}
 
 	public DrivePod[] getPods() {
-		return pods;
+		return (DrivePod[]) pods.toArray();
 	}
 
 	@Override
@@ -211,6 +203,13 @@ public class DiffySwerve extends SubsystemBase {
 		ChassisSpeedsPublisher.set(drivetrainKinematics.toChassisSpeeds(getModuleStates()));
 
 
+		if(Constants.tuningMode) {
+			// update the tunable numbers
+			if (azimuthkP.hasChanged() || azimuthkI.hasChanged() || azimuthkD.hasChanged()) {
+				setPIDs();
+			}
+		}
+
 
 		// uncomment these lines for azimuth tuning
 		// leftPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS),
@@ -225,13 +224,22 @@ public class DiffySwerve extends SubsystemBase {
 		// ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
 	}
 
+	private void setPIDs() {
+		pods.forEach(pod -> {
+			pod.setPID(
+				azimuthkP.doubleValue(),
+				azimuthkI.doubleValue(),
+				azimuthkD.doubleValue()
+			);
+		});
+	}
+
 	/**
 	 * Returns the maximum output scalar of all pods.
 	 * @return A DoubleSupplier that provides the maximum output scalar of all pods.
 	 */
 	private DoubleSupplier getGlobalOutputScalar() {
-		// yes im using Arrays.stream() deal with it
-		return () -> Arrays.stream(pods)
+		return () -> pods.stream()
 				.mapToDouble(DrivePod::getPodOutputScalar)
 				.max()
 				.orElse(0);

@@ -14,6 +14,7 @@ import frc.robot.Constants.RobotMap.PodConfig;
 /** Add your docs here. */
 public final class Constants {
 	public static final int driverPort = 0;
+	public static final boolean tuningMode = false; // if true, the robot will use the dashboard to get values for tunable numbers
 
 	/** CAN ID, Invert, Pod Positions, Offsets, Conversion Rates */
 	public final class RobotMap {
@@ -52,11 +53,11 @@ public final class Constants {
 			public static final double maxOutput = 1;
 			public static final double rampRate = 0.2;
 
-			public static final double azimuthkP = 0.6;
-			public static final double azimuthkI = 0.0;
-			public static final double azimuthkD = 0.0;
-			public static final double azimuthkS = 0.0;
+			public static final double kP = 1;
+			public static final double kI = 0.0;
+			public static final double kD = 0.0;
 		}
+		
 		private static final double wheelBase = 1.0;
 		private static final double trackWidth = 1.0;
 		public static final PodConfig[] PodConfigs = {
