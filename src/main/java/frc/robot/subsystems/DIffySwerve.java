@@ -66,7 +66,7 @@ public class DIffySwerve extends SubsystemBase {
 	public DIffySwerve() {
 
 		this.gyroPID = RobotConfig.gyroPID;
-		this.drivetrainKinematics = RobotConfig.drivetrainKinematics;
+		this.drivetrainKinematics = RobotMap.drivetrainKinematics;
 		this.robotMaxSpeed = RobotConfig.robotMaxSpeed;
 		gyroPID.enableContinuousInput(0.0, 2 * Math.PI);
 
@@ -169,7 +169,7 @@ public class DIffySwerve extends SubsystemBase {
 
 	@Override
 	public void simulationPeriodic() {
-		gyroSimState.setAngularVelocityZ(RobotConfig.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond);
+		gyroSimState.setAngularVelocityZ(RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond);
 	}
 
 	@Override
