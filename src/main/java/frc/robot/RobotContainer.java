@@ -44,27 +44,26 @@ public class RobotContainer {
 	}
 
 	private void configureBindings() {
-		// driverCommand.pov(-1).onFalse(new TestPods(swerve, () -> getPodToTest(), () -> driverRaw.getRightX()));
+		driverCommand.pov(-1).onFalse(new TestPods(swerve, () -> getPodToTest(), () -> driverRaw.getRightX()));
 
-		// driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
+		driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
 		// // driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));
-		// driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
+		driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
 	}
 	
 	private int getPodToTest() {
-		if (driverRaw.getPOV() == 0) {
-			return 0;
+		switch (driverRaw.getPOV()) {
+			case 0:
+				return 0;
+			case 90:
+				return 1;
+			case 180:
+				return 2;
+			case 270:
+				return 3;
+			default:
+				return -1;
 		}
-		if (driverRaw.getPOV() == 90) {
-			return 1;
-		}
-		if (driverRaw.getPOV() == 180) {
-			return 2;
-		}
-		if (driverRaw.getPOV() == 270) {
-			return 3;
-		}
-		return -1;
 	}
 
 	public Command getAutonomousCommand() {
