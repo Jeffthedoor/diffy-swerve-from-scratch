@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.PointPods;
 import frc.robot.commands.ResetZeroes;
 import frc.robot.commands.TestPods;
 import frc.robot.subsystems.DIffySwerve;
@@ -45,6 +46,7 @@ public class RobotContainer {
 
 	private void configureBindings() {
 		driverCommand.pov(-1).onFalse(new TestPods(swerve, () -> getPodToTest(), () -> driverRaw.getRightX()));
+		driverCommand.rightTrigger().whileTrue(new PointPods(swerve, () -> new Translation2d(driverRaw.getRightX(), driverRaw.getRightY())));
 
 		driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
 		// // driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));

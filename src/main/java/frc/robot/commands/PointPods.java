@@ -18,7 +18,7 @@ public class PointPods extends Command {
 	DIffySwerve swerve;
 	Supplier<Translation2d> joystickRight;
 
-	public PointPods(DIffySwerve swerve, Supplier<Translation2d> joystickRight, Supplier<Boolean> boost) {
+	public PointPods(DIffySwerve swerve, Supplier<Translation2d> joystickRight) {
 		this.swerve = swerve;
 		this.joystickRight = joystickRight;
 		addRequirements(swerve);
