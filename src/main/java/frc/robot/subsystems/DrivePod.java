@@ -62,8 +62,8 @@ public class DrivePod extends SubsystemBase {
 	private DoublePublisher leftOutputPublisher;
 	private DoublePublisher rightOutputPublisher;
 
-	private double leftOutput = 0;
-	private double rightOutput = 0;
+	private double leftMotorOutput = 0;
+	private double rightMotorOutput = 0;
 	
 	private double offset;
 
@@ -186,8 +186,8 @@ public class DrivePod extends SubsystemBase {
 		encoderAnglePublisher.set(getAngle());
 		leftPositionPublisher.set(leftMotor.getPosition().getValueAsDouble());
 		rightPositionPublisher.set(rightMotor.getPosition().getValueAsDouble());
-		leftOutputPublisher.set(leftOutput);
-		rightOutputPublisher.set(rightOutput);
+		leftOutputPublisher.set(leftMotorOutput);
+		rightOutputPublisher.set(rightMotorOutput);
 	}
 
 	/**
@@ -247,6 +247,12 @@ public class DrivePod extends SubsystemBase {
 		return (leftMotor.getPosition().getValueAsDouble() + rightMotor.getPosition().getValueAsDouble()) / 2;
 	}
 
+	private double getVelocity() {
+		// return (leftMotor.getVelocity().getValueAsDouble() + rightMotor.getVelocity().getValueAsDouble()) / 2;
+		return (drivetrainSim.getLeftVelocityMetersPerSecond() + drivetrainSim.getRightVelocityMetersPerSecond()) / 2;
+		//TODO: for the love of god change this before it goes on a robot
+	}
+
 	public void stop() {
 		leftMotor.stopMotor();
 		rightMotor.stopMotor();
@@ -258,7 +264,7 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public SwerveModuleState getState() {
-		return new SwerveModuleState(leftMotor.getVelocity().getValueAsDouble(),
+		return new SwerveModuleState(getVelocity(),
 				Rotation2d.fromRotations(getAngle()));
 	}
 
@@ -280,8 +286,8 @@ public class DrivePod extends SubsystemBase {
 
 
 		//initialize outputs to raw speed
-		double leftOutput = state.speedMetersPerSecond; 
-		double rightOutput = state.speedMetersPerSecond; 
+		double leftOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed; 
+		double rightOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed;; 
 
 		//adjust outputs based on the PID Controller
 		double correction = anglePID.calculate(getAngle(), state.angle.getRotations());
@@ -303,8 +309,8 @@ public class DrivePod extends SubsystemBase {
 			//it is also assumed that all scalars are 1 during non-turning operations.
 			//TODO: log each podOutputScalar
 			if(podOutputScalar > globalScalar) {
-				leftOutput *= (podOutputScalar / podMaxOutput);
-				rightOutput *= (podOutputScalar / podMaxOutput);
+				leftOutput *= podMaxOutput;
+				rightOutput *= podMaxOutput;
 			} else {
 				leftOutput *= globalScalar;
 				rightOutput *= globalScalar;
@@ -317,8 +323,8 @@ public class DrivePod extends SubsystemBase {
 		rightMotor.setControl(new DutyCycleOut(rightOutput));
 
 		//update class-scope variables for logging
-		this.leftOutput = leftOutput;
-		this.rightOutput = rightOutput;
+		leftMotorOutput = leftOutput;
+		rightMotorOutput = rightOutput;
 
 
 

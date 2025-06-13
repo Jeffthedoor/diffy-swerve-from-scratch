@@ -25,8 +25,8 @@ public class DriveCommand extends Command {
 	Rotation2d rotation = new Rotation2d();
 	double maxSpeed = RobotConfig.robotMaxSpeed;
 
-	private final SlewRateLimiter xLimiter = new SlewRateLimiter(0.75);
-	private final SlewRateLimiter yLimiter = new SlewRateLimiter(0.75);
+	// private final SlewRateLimiter xLimiter = new SlewRateLimiter(0.75);
+	// private final SlewRateLimiter yLimiter = new SlewRateLimiter(0.75);
 
 	public DriveCommand(DiffySwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight,
 			Supplier<Integer> DPAD, Supplier<Boolean> boost) {
@@ -72,7 +72,9 @@ public class DriveCommand extends Command {
 																								// would be negative Y)
 
 		double speedOmega = MathUtil.applyDeadband(joystickLeft.get().getX(), 0.07);
-		ChassisSpeeds speeds = new ChassisSpeeds(xLimiter.calculate(speedX), yLimiter.calculate(speedY), speedOmega);
+		// ChassisSpeeds speeds = new ChassisSpeeds(xLimiter.calculate(speedX), yLimiter.calculate(speedY), speedOmega);
+		ChassisSpeeds speeds = new ChassisSpeeds(speedX, speedY, speedOmega);
+
 		swerve.setRobotSpeeds(speeds);
 
 	}

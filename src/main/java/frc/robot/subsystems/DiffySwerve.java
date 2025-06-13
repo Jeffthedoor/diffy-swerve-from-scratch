@@ -24,6 +24,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
@@ -65,6 +66,8 @@ public class DiffySwerve extends SubsystemBase {
 	private final Field2d field2d = new Field2d();
 
 	StructArrayPublisher<SwerveModuleState> SMSPublisher;
+	StructPublisher<Pose2d> PosePublisher;
+	StructPublisher<ChassisSpeeds> ChassisSpeedsPublisher;
 
 	public DiffySwerve() {
 
@@ -90,7 +93,10 @@ public class DiffySwerve extends SubsystemBase {
 
 		// gyro.configAllSettings(new Pigeon2Configuration());
 
-		SMSPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("MyStates", SwerveModuleState.struct).publish();
+		SMSPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("ModuleStates", SwerveModuleState.struct).publish();
+		PosePublisher = NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish();
+		ChassisSpeedsPublisher = NetworkTableInstance.getDefault().getStructTopic("ChassisSpeeds", ChassisSpeeds.struct).publish();
+
 		if(Robot.isSimulation()) {
 			gyroSimState = new Pigeon2SimState(gyro);
 		}
@@ -147,20 +153,15 @@ public class DiffySwerve extends SubsystemBase {
 	}
 
 	public void setRobotSpeeds(ChassisSpeeds chassisSpeeds) {
-		boolean manualTurn = true; // Math.abs(chassisSpeeds.omegaRadiansPerSecond) > 0.1;
-
 		chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds.vxMetersPerSecond,
 				chassisSpeeds.vyMetersPerSecond,
-				manualTurn ? chassisSpeeds.omegaRadiansPerSecond * 3.0 : // TODO: magic number, please remove
-						gyroPID.calculate(getGyro().getRadians(), targetAngle),
+				chassisSpeeds.omegaRadiansPerSecond * 3.0, // TODO: magic number, please remove
 				getGyro());
 
 		SwerveModuleState[] states = drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
 		SwerveDriveKinematics.desaturateWheelSpeeds(states, robotMaxSpeed);
 
-		if (manualTurn) {
-			targetAngle = getGyro().getRadians() + (chassisSpeeds.omegaRadiansPerSecond / 2.0); // TODO: magic number
-		}
+		
 		for (int i = 0; i < pods.length; i++) {
 			pods[i].setPodState(states[i]);
 		}
@@ -172,6 +173,7 @@ public class DiffySwerve extends SubsystemBase {
 
 	@Override
 	public void simulationPeriodic() {
+		//update the gyro to functionally be the robot/odo angle
 		gyroSimState.setAngularVelocityZ(RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond);
 	}
 
@@ -183,7 +185,9 @@ public class DiffySwerve extends SubsystemBase {
 		field2d.setRobotPose(odometer.getPoseMeters()
 				.transformBy(new Transform2d(new Translation2d(), new Rotation2d(odoAngleOffset + Math.PI))));
 
-		SMSPublisher.accept(getModuleStates());
+		SMSPublisher.set(getModuleStates());
+		PosePublisher.set(odometer.getPoseMeters());
+		ChassisSpeedsPublisher.set(drivetrainKinematics.toChassisSpeeds(getModuleStates()));
 
 
 
