@@ -4,29 +4,53 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.controls.VoltageOut;
 import com.ctre.phoenix6.hardware.TalonFXS;
+import com.ctre.phoenix6.signals.ExternalFeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.sim.ChassisReference;
+import com.ctre.phoenix6.sim.TalonFXSSimState;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj.AnalogEncoder;
+import edu.wpi.first.wpilibj.simulation.AnalogEncoderSim;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotMotor;
+import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Robot;
+import frc.robot.Constants.SimConstants;
 import frc.robot.Constants.RobotMap;
 
 /** This is a sample pod that uses a CANcoder and TalonFXes. */
 public class DrivePod extends SubsystemBase {
 	// public Encoder absoluteEncoder;
-	public TalonFXS leftMotor;
-	public TalonFXS rightMotor;
+	private TalonFXS leftMotor;
+	private TalonFXS rightMotor;
+	private AnalogEncoder encoder;
+
+	private TalonFXSSimState leftMotorSim;
+	private TalonFXSSimState rightMotorSim;
+	private AnalogEncoderSim absoluteEncoderSim;
+	private DifferentialDrivetrainSim drivetrainSim;
 	
 	private double offset;
-
-	private AnalogEncoder encoder;
 
 	TalonFXSConfiguration leftConfig = new TalonFXSConfiguration();
 	TalonFXSConfiguration rightConfig = new TalonFXSConfiguration();
@@ -37,13 +61,12 @@ public class DrivePod extends SubsystemBase {
 
 	private final PIDController anglePID;
 
-
 	public DrivePod(int absoluteEncoderID, int leftID, int rightID, boolean leftInvert, boolean rightInvert, double absoluteEncoderOffset,
 			boolean encoderInvert, int ampLimit, boolean brake,
-			double rampRate, double kP, double kI, double kD, double maxOut) {
+			double rampRate, double kP, double kI, double kD, double maxOut, double motorGearing) {
 
-		leftMotor = makeMotor(leftID, leftInvert, brake, ampLimit, rampRate, 1d, 1d, leftConfig);
-		rightMotor = makeMotor(rightID, rightInvert, brake, ampLimit, rampRate, 1d, 1d, rightConfig);
+		leftMotor = makeMotor(leftID, leftInvert, brake, ampLimit, motorGearing, rampRate, leftConfig);
+		rightMotor = makeMotor(rightID, rightInvert, brake, ampLimit, motorGearing, rampRate, rightConfig);
 
 
 		encoder = new AnalogEncoder(absoluteEncoderID);
@@ -51,9 +74,13 @@ public class DrivePod extends SubsystemBase {
 		this.offset = absoluteEncoderOffset;
 
 		anglePID = new PIDController(kP, kI, kD);
-
+		// anglePID.enableContinuousInput(0, 1);
 
 		resetPod();
+
+		if(Robot.isSimulation()) {
+			makeSim();
+		}
 	}
 
 	/**
@@ -72,8 +99,7 @@ public class DrivePod extends SubsystemBase {
 	 * @param ROTOR_TO_ENCODER_RATIO     ratio between the rotor and the feedback
 	 *                                   encoder. this is usually 1 for drive motors
 	 */
-	public TalonFXS makeMotor(int id, boolean inverted, boolean isBrake, double statorLimit, double rampRate,
-			double ENCODER_TO_MECHANISM_RATIO, double ROTOR_TO_ENCODER_RATIO, TalonFXSConfiguration driveConfig) {
+	private TalonFXS makeMotor(int id, boolean inverted, boolean isBrake, double statorLimit, double motorGearing, double rampRate, TalonFXSConfiguration driveConfig) {
 		// I figured nobody had the guts to put a CANivore on a turdswerve, so i'm
 		// leaving out the CAN bus parameter
 		TalonFXS motor = new TalonFXS(id);
@@ -103,13 +129,42 @@ public class DrivePod extends SubsystemBase {
 		driveConfig.ClosedLoopRamps.VoltageClosedLoopRampPeriod = rampRate;
 
 		// set feedback ratios
-		driveConfig.ExternalFeedback.SensorToMechanismRatio = ENCODER_TO_MECHANISM_RATIO;
-		driveConfig.ExternalFeedback.RotorToSensorRatio = ROTOR_TO_ENCODER_RATIO;
-		// the remote sensor defaults to internal encoder
+		driveConfig.ExternalFeedback.SensorToMechanismRatio = motorGearing;
+		driveConfig.ExternalFeedback.RotorToSensorRatio = 1d;
 
 		motor.getConfigurator().apply(driveConfig);
 
 		return motor;
+	}
+
+	private void makeSim() {
+		leftMotorSim = leftMotor.getSimState();
+		rightMotorSim = rightMotor.getSimState();
+		absoluteEncoderSim = new AnalogEncoderSim(encoder);
+
+
+		// left drivetrain motors are typically CCW+
+		leftMotorSim.MotorOrientation = ChassisReference.CounterClockwise_Positive;
+
+		// right drivetrain motors are typically CW+
+		rightMotorSim.MotorOrientation = ChassisReference.Clockwise_Positive;
+
+		drivetrainSim = DifferentialDrivetrainSim.createKitbotSim(
+			KitbotMotor.kSingleMiniCIMPerSide, // 2 CIMs per side.
+			KitbotGearing.k10p71,        // 10.71:1
+			KitbotWheelSize.kSixInch,    // 6" diameter wheels.
+			3,
+			null                         // No measurement noise.
+		);
+
+		//TODO: ensure stall torque, free current, and stall current are correct; these values are guesstimates
+		// drivetrainSim = new DifferentialDrivetrainSim(new DCMotor(16, 300, 20, 2, RotationsPerSecond.of(27).in(RadiansPerSecond), 1),
+		// 		SimConstants.gearRatio,
+		// 		SimConstants.inertia,
+		// 		SimConstants.mass, 
+		// 		SimConstants.wheelRadius,
+		// 		SimConstants.trackWidth,
+		// 		VecBuilder.fill(0.001, 0.001, 0.001, 0.1, 0.1, 0.005, 0.005));
 	}
 
 
@@ -144,6 +199,11 @@ public class DrivePod extends SubsystemBase {
 				Rotation2d.fromRotations(getAngle()));
 	}
 
+	public SwerveModuleState getState() {
+		return new SwerveModuleState(leftMotor.getVelocity().getValueAsDouble(),
+				Rotation2d.fromRotations(getAngle()));
+	}
+
 	public void setPodState(SwerveModuleState state) {
 		// make sure pod is inside of possible rotation zone
 		while (state.angle.getRotations() > 1) {
@@ -167,8 +227,8 @@ public class DrivePod extends SubsystemBase {
 
 		//adjust outputs based on the PID Controller
 		double correction = anglePID.calculate(getAngle(), state.angle.getRotations());
-		leftOutput -= correction;
-		rightOutput += correction;
+		leftOutput += correction;
+		rightOutput -= correction;
 
 		//normalize outputs to be between -1 and 1
 		double maxOutput = Math.max(Math.abs(leftOutput), Math.abs(rightOutput));
@@ -179,7 +239,6 @@ public class DrivePod extends SubsystemBase {
 		// set the motor outputs
 		leftMotor.setControl(new DutyCycleOut(leftOutput));
 		rightMotor.setControl(new DutyCycleOut(rightOutput));
-
 
 
 
@@ -199,6 +258,7 @@ public class DrivePod extends SubsystemBase {
 		rightMotor.set(-speed);
 	}
 
+
 	@Override
 	public void periodic() {
 		// TODO: dont use smartdashboard
@@ -214,5 +274,27 @@ public class DrivePod extends SubsystemBase {
 		// SmartDashboard.putNumber("azimuth.getAppliedOutput()" +
 		// azimuthMotor.getDeviceId(), azimuthMotor.getAppliedOutput());
 		// //getAppliedOutput());
+
+
+
+	}
+
+	@Override
+	public void simulationPeriodic() {
+		leftMotorSim.setSupplyVoltage(16);
+		rightMotorSim.setSupplyVoltage(16);
+
+		//TODO: might not have to invert the left motor voltage
+		drivetrainSim.setInputs(
+				leftMotorSim.getMotorVoltage(),
+				rightMotorSim.getMotorVoltage());
+		drivetrainSim.update(0.02); // 20ms update rate, typical for simulation
+		double metersToMotorRotations = SimConstants.gearRatio / (2 * Math.PI * SimConstants.wheelRadius);
+		leftMotorSim.setRawRotorPosition(drivetrainSim.getLeftPositionMeters() * metersToMotorRotations);
+		rightMotorSim.setRawRotorPosition(drivetrainSim.getRightPositionMeters() * metersToMotorRotations);
+		leftMotorSim.setRotorVelocity(drivetrainSim.getLeftVelocityMetersPerSecond() * metersToMotorRotations);
+		rightMotorSim.setRotorVelocity(drivetrainSim.getRightVelocityMetersPerSecond() * metersToMotorRotations);
+
+		absoluteEncoderSim.set(MathUtil.inputModulus(drivetrainSim.getHeading().getRotations(), -1,  1));
 	}
 }

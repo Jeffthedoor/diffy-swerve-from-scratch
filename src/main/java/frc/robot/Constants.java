@@ -8,6 +8,7 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
+import frc.robot.Constants.RobotMap.PodConfig;
 
 /** Add your docs here. */
 public final class Constants {
@@ -42,19 +43,19 @@ public final class Constants {
 				this.encoderOffset = encoderOffset;
 			}
 			public static final boolean encoderInvert = false;
-			public static final boolean leftMotorInvert = false; 
+			public static final boolean leftMotorInvert = true; 
 			public static final boolean rightMotorInvert = false; 
 
-			public static final double azimuthRadiansPerRotation = 1;
+			public static final double motorGearing = 50;
 
 			public static final boolean motorsBrake = true;
 			public static final int ampLimit = 80;
 			public static final double maxOutput = 1;
 			public static final double rampRate = 0.2;
 
-			public static final double azimuthkP = 1.2;
-			public static final double azimuthkI = 0.02;
-			public static final double azimuthkD = 0.001;
+			public static final double azimuthkP = 1;
+			public static final double azimuthkI = 0.0;
+			public static final double azimuthkD = 0.0;
 			public static final double azimuthkS = 0.0;
 		}
 		public static final PodConfig[] PodConfigs = {
@@ -83,6 +84,15 @@ public final class Constants {
 		
 
 		public static final double robotMaxSpeed = 3.99; // meters per second
+
+	}
+
+	public final class SimConstants {
+		public static final double inertia = 0.0605; // kg*m^2
+		public static final double mass = 50; // kg, approximate mass of the robot
+		public static final double wheelRadius = 0.3; // meters
+		public static final double trackWidth = 0.5; // meters, distance between left and right wheels
+		public static final double gearRatio = 1/PodConfig.motorGearing; // gear ratio of the drivetrain
 
 	}
 }
