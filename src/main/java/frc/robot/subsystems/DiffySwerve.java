@@ -172,10 +172,10 @@ public class DiffySwerve extends SubsystemBase {
 		SwerveDriveKinematics.desaturateWheelSpeeds(states, robotMaxSpeed);
 		if (isTurning()) {
 			// if (isMoving()) {
-				// for (int i = 0; i < pods.length; i++) {
-				// 	pods[i].point(pods[i].getState().angle); // TODO: jank fix revise later also crashes the sim idk why
-				// 	// pods[i].setPodState(new SwerveModuleState(0, pods[i].getState().angle)); // stop driving and don't change the azimuth angle; doesn't work because it changes the pod's "target angle" which disables "isTurning()" check
-				// }
+			// 	for (int i = 0; i < pods.length; i++) {
+			// 		pods[i].point(pods[i].getState().angle); // TODO: has bug
+			// 		// pods[i].setPodState(new SwerveModuleState(0, pods[i].getState().angle)); // stop driving and don't change the azimuth angle; doesn't work because it changes the pod's "target angle" which disables "isTurning()" check
+			// 	}
 			// } else {
 				for (int i = 0; i < pods.length; i++) {
 					pods[i].setPodState(new SwerveModuleState(0, states[i].angle)); // stop driving, but correct the azimuth angle

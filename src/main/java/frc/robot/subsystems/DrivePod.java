@@ -269,11 +269,10 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public void point(Rotation2d angle) {
-		setPodState(new SwerveModuleState(0, angle));
+		setPodState(optimizePodHeading(new SwerveModuleState(0, angle)));
 	}
 
-	public void setPodState(SwerveModuleState state) {
-		// optimize pod target heading based on current heading
+	public SwerveModuleState optimizePodHeading(SwerveModuleState state) {
 		while (state.angle.getRotations() - getState().angle.getRotations() > 0.25) {
 			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.minus(Rotation2d.k180deg));
 		} 
@@ -287,6 +286,12 @@ public class DrivePod extends SubsystemBase {
 		while (state.angle.getRotations() < RobotMap.podRotationLowerBound) {
 			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.plus(Rotation2d.k180deg));
 		} 
+		return state;
+	}
+
+	public void setPodState(SwerveModuleState state) {
+		// optimize pod target heading based on current heading
+		state = optimizePodHeading(state);
 
 		targetState = state;
 		//initialize outputs to raw speed
@@ -359,11 +364,11 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public boolean isTurning() {
-		return Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.1;
+		return Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.03;
 	}
 
 	public boolean isMoving() {
-		return Math.abs(getState().speedMetersPerSecond) > 1.0;
+		return Math.abs(getState().speedMetersPerSecond) > 0.1;
 	}
 
 	@Override

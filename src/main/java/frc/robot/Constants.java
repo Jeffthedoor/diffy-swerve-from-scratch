@@ -52,7 +52,7 @@ public final class Constants {
 			public static final double maxOutput = 1;
 			public static final double rampRate = 0.2;
 
-			public static final double azimuthkP = 1;
+			public static final double azimuthkP = 0.6;
 			public static final double azimuthkI = 0.0;
 			public static final double azimuthkD = 0.0;
 			public static final double azimuthkS = 0.0;
