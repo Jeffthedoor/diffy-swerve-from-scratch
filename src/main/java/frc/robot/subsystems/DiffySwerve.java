@@ -4,6 +4,9 @@
 
 package frc.robot.subsystems;
 
+import java.util.Arrays;
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
 
@@ -75,7 +78,7 @@ public class DiffySwerve extends SubsystemBase {
 
 
 		for (int i = 0; i < pods.length; i++) {
-			pods[i] = new DrivePod(RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, PodConfig.maxOutput, PodConfig.motorGearing);
+			pods[i] = new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.azimuthkP, PodConfig.azimuthkI, PodConfig.azimuthkD, getGlobalOutputScalar(), PodConfig.motorGearing);
 		}
 		
 		SwerveModulePosition positions[] = new SwerveModulePosition[pods.length];
@@ -197,7 +200,17 @@ public class DiffySwerve extends SubsystemBase {
 		// ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
 	}
 
-
+	/**
+	 * Returns the maximum output scalar of all pods.
+	 * @return A DoubleSupplier that provides the maximum output scalar of all pods.
+	 */
+	private DoubleSupplier getGlobalOutputScalar() {
+		// yes im using Arrays.stream() deal with it
+		return () -> Arrays.stream(pods)
+				.mapToDouble(DrivePod::getPodOutputScalar)
+				.max()
+				.orElse(0);
+	}
 
 	private String getFomattedPose() {
 		var pose = odometer.getPoseMeters();

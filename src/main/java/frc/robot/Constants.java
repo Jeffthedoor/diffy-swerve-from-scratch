@@ -79,6 +79,7 @@ public final class Constants {
 		public static final PIDController gyroPID = new PIDController(0.046, 0d, 0.001);
 
 		public static final double robotMaxSpeed = 3.99; // meters per second
+		public static final double motorMaxOutput = 1.0; // max output of the motors
 
 	}
 

@@ -7,6 +7,8 @@ package frc.robot.subsystems;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
+import java.util.function.DoubleSupplier;
+
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
 import com.ctre.phoenix6.controls.VoltageOut;
@@ -25,6 +27,8 @@ import edu.wpi.first.math.kinematics.DifferentialDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.AnalogEncoder;
 import edu.wpi.first.wpilibj.simulation.AnalogEncoderSim;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim;
@@ -36,6 +40,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Constants.SimConstants;
+import frc.robot.Constants.RobotConfig;
 import frc.robot.Constants.RobotMap;
 
 /** This is a sample pod that uses a CANcoder and TalonFXes. */
@@ -49,8 +54,21 @@ public class DrivePod extends SubsystemBase {
 	private TalonFXSSimState rightMotorSim;
 	private AnalogEncoderSim absoluteEncoderSim;
 	private DifferentialDrivetrainSim drivetrainSim;
+
+	private DoublePublisher podScalarPublisher;
+	private DoublePublisher encoderAnglePublisher;
+	private DoublePublisher leftPositionPublisher;
+	private DoublePublisher rightPositionPublisher;
+	private DoublePublisher leftOutputPublisher;
+	private DoublePublisher rightOutputPublisher;
+
+	private double leftOutput = 0;
+	private double rightOutput = 0;
 	
 	private double offset;
+
+	private double podOutputScalar = 1;
+	private final DoubleSupplier globalOutputScalar;
 
 	TalonFXSConfiguration leftConfig = new TalonFXSConfiguration();
 	TalonFXSConfiguration rightConfig = new TalonFXSConfiguration();
@@ -61,9 +79,28 @@ public class DrivePod extends SubsystemBase {
 
 	private final PIDController anglePID;
 
-	public DrivePod(int absoluteEncoderID, int leftID, int rightID, boolean leftInvert, boolean rightInvert, double absoluteEncoderOffset,
+	/**
+	 * Creates a DrivePod with the specified parameters.
+	 * @param podID The ID of the pod (used only for logging).
+	 * @param absoluteEncoderID The ID of the absolute encoder.
+	 * @param leftID The CAN ID of the left motor.
+	 * @param rightID The CAN ID of the right motor.
+	 * @param leftInvert Whether the left motor is inverted.
+	 * @param rightInvert Whether the right motor is inverted.
+	 * @param absoluteEncoderOffset The offset for the absolute encoder.
+	 * @param encoderInvert Whether the absolute encoder is inverted.
+	 * @param ampLimit The current limit for the motors.
+	 * @param brake Whether the motors should be in brake mode.
+	 * @param rampRate The ramp rate for the motors.
+	 * @param kP The proportional gain for the angle PID controller.
+	 * @param kI The integral gain for the angle PID controller.
+	 * @param kD The derivative gain for the angle PID controller.
+	 * @param globalMaxOutput A supplier for the global maximum output scalar.
+	 * @param motorGearing The gearing ratio of the motors.
+	 */
+	public DrivePod(int podID, int absoluteEncoderID, int leftID, int rightID, boolean leftInvert, boolean rightInvert, double absoluteEncoderOffset,
 			boolean encoderInvert, int ampLimit, boolean brake,
-			double rampRate, double kP, double kI, double kD, double maxOut, double motorGearing) {
+			double rampRate, double kP, double kI, double kD, DoubleSupplier globalMaxOutput, double motorGearing) {
 
 		leftMotor = makeMotor(leftID, leftInvert, brake, ampLimit, motorGearing, rampRate, leftConfig);
 		rightMotor = makeMotor(rightID, rightInvert, brake, ampLimit, motorGearing, rampRate, rightConfig);
@@ -76,28 +113,25 @@ public class DrivePod extends SubsystemBase {
 		anglePID = new PIDController(kP, kI, kD);
 		// anglePID.enableContinuousInput(0, 1);
 
+		this.globalOutputScalar = globalMaxOutput;
+
 		resetPod();
+		startLogging(podID);
 
 		if(Robot.isSimulation()) {
 			makeSim();
 		}
 	}
-
 	/**
-	 * Creates a new TurdonFX (please use this for drive motors only)
-	 * 
-	 * @param id                         CAN ID for the motor
-	 * @param inverted                   true for CW+, false for CCW+
-	 * @param isBrake                    true for brake, false for coast
-	 * @param statorLimit                the stator current limit in amps
-	 * @param rampRate                   time it takes for the motor to reach full
-	 *                                   power from zero power in seconds
-	 * @param ENCODER_TO_MECHANISM_RATIO ratio between the feedback encoder
-	 *                                   (integrated for drive motors) and the
-	 *                                   mechanism. this varies based on your gear
-	 *                                   ratio
-	 * @param ROTOR_TO_ENCODER_RATIO     ratio between the rotor and the feedback
-	 *                                   encoder. this is usually 1 for drive motors
+	 * Creates a TalonFXS motor with the given parameters.
+	 * @param id The CAN ID of the motor.
+	 * @param inverted Whether the motor is inverted.
+	 * @param isBrake Whether the motor should be in brake mode.
+	 * @param statorLimit The stator current limit for the motor.
+	 * @param motorGearing The gearing ratio of the motor.
+	 * @param rampRate The ramp rate for the motor.
+	 * @param driveConfig The configuration for the motor.
+	 * @return A configured TalonFXS motor.
 	 */
 	private TalonFXS makeMotor(int id, boolean inverted, boolean isBrake, double statorLimit, double motorGearing, double rampRate, TalonFXSConfiguration driveConfig) {
 		// I figured nobody had the guts to put a CANivore on a turdswerve, so i'm
@@ -137,6 +171,30 @@ public class DrivePod extends SubsystemBase {
 		return motor;
 	}
 
+	private void startLogging(int id) {
+		podScalarPublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("OutputScalar").publish();
+		encoderAnglePublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("EncoderAngle").publish();
+		leftPositionPublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("LeftPosition").publish();
+		rightPositionPublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("RightPosition").publish();
+		leftOutputPublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("LeftOutput").publish();
+		rightOutputPublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("RightOutput").publish();
+		updateLogging();
+	}
+
+	private void updateLogging() {
+		podScalarPublisher.set(podOutputScalar);
+		encoderAnglePublisher.set(getAngle());
+		leftPositionPublisher.set(leftMotor.getPosition().getValueAsDouble());
+		rightPositionPublisher.set(rightMotor.getPosition().getValueAsDouble());
+		leftOutputPublisher.set(leftOutput);
+		rightOutputPublisher.set(rightOutput);
+	}
+
+	/**
+	 * Creates a simulation of the drivetrain.
+	 * This method initializes the simulation states for the left and right motors,
+	 * and sets the motor orientations according to the drivetrain configuration.
+	 */
 	private void makeSim() {
 		leftMotorSim = leftMotor.getSimState();
 		rightMotorSim = rightMotor.getSimState();
@@ -230,15 +288,37 @@ public class DrivePod extends SubsystemBase {
 		leftOutput += correction;
 		rightOutput -= correction;
 
-		//normalize outputs to be between -1 and 1
-		double maxOutput = Math.max(Math.abs(leftOutput), Math.abs(rightOutput));
-		if (maxOutput > 1) {
-			leftOutput /= maxOutput;
-			rightOutput /= maxOutput;
+		
+		//prevent race conditions
+		double globalScalar = globalOutputScalar.getAsDouble();	
+		double podMaxOutput = Math.max(Math.abs(leftOutput), Math.abs(rightOutput));
+
+
+		//if the pod output is greater than what the motor can output, scale it down
+		if (podMaxOutput > RobotConfig.motorMaxOutput) {
+			podOutputScalar = RobotConfig.motorMaxOutput / podMaxOutput;
+
+			//if the calculated power scalar for the pod is greater than the global scalar, scale the outputs down by the pod scalar
+			//otherwise, scale the outputs down by the global scalar. It is assumed that the global scalar will update within a loop cycle.
+			//it is also assumed that all scalars are 1 during non-turning operations.
+			//TODO: log each podOutputScalar
+			if(podOutputScalar > globalScalar) {
+				leftOutput *= (podOutputScalar / podMaxOutput);
+				rightOutput *= (podOutputScalar / podMaxOutput);
+			} else {
+				leftOutput *= globalScalar;
+				rightOutput *= globalScalar;
+			}
 		}
+		
+		
 		// set the motor outputs
 		leftMotor.setControl(new DutyCycleOut(leftOutput));
 		rightMotor.setControl(new DutyCycleOut(rightOutput));
+
+		//update class-scope variables for logging
+		this.leftOutput = leftOutput;
+		this.rightOutput = rightOutput;
 
 
 
@@ -253,6 +333,10 @@ public class DrivePod extends SubsystemBase {
 		// error *= 180 / Math.PI;
 	}
 
+	public double getPodOutputScalar() {
+		return podOutputScalar;
+	}
+
 	public void setRotationalSpeed(double speed) {
 		leftMotor.set(speed);
 		rightMotor.set(-speed);
@@ -261,22 +345,7 @@ public class DrivePod extends SubsystemBase {
 
 	@Override
 	public void periodic() {
-		// TODO: dont use smartdashboard
-		// SmartDashboard.putNumber("absolute encoder" + absoluteEncoder.getDeviceID(),
-		// 		absoluteEncoder.getAbsolutePosition().getValueAsDouble());
-		// SmartDashboard.putNumber("azimuth pose " + absoluteEncoder.getDeviceID(),
-		// 		azimuthMotor.getPosition().getValueAsDouble());
-		// SmartDashboard.putNumber("azimuth pose " + config.absoluteEncoderID,
-		// azimuthMotor.);
-
-		// SmartDashboard.putNumber("drive pos " + driveMotor.getDeviceId(),
-		// driveEncoder.getPosition());
-		// SmartDashboard.putNumber("azimuth.getAppliedOutput()" +
-		// azimuthMotor.getDeviceId(), azimuthMotor.getAppliedOutput());
-		// //getAppliedOutput());
-
-
-
+		updateLogging();
 	}
 
 	@Override
