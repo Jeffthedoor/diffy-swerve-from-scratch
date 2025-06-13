@@ -34,7 +34,7 @@ import frc.robot.Robot;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotConfig;
 
-public class DIffySwerve extends SubsystemBase {
+public class DiffySwerve extends SubsystemBase {
 	private final Pigeon2 gyro;
 
 	private Pigeon2SimState gyroSimState;
@@ -63,7 +63,7 @@ public class DIffySwerve extends SubsystemBase {
 
 	StructArrayPublisher<SwerveModuleState> SMSPublisher;
 
-	public DIffySwerve() {
+	public DiffySwerve() {
 
 		this.gyroPID = RobotConfig.gyroPID;
 		this.drivetrainKinematics = RobotMap.drivetrainKinematics;

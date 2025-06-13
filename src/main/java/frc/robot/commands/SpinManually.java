@@ -7,15 +7,15 @@ package frc.robot.commands;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.DIffySwerve;
+import frc.robot.subsystems.DiffySwerve;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
-public class TestPods extends Command {
+public class SpinManually extends Command {
   /** Creates a new TestPods. */
-  private DIffySwerve swerve;
+  private DiffySwerve swerve;
   private Supplier<Integer> pod;
   private Supplier<Double> command;
-  public TestPods(DIffySwerve swerve, Supplier<Integer> pod, Supplier<Double> command) {
+  public SpinManually(DiffySwerve swerve, Supplier<Integer> pod, Supplier<Double> command) {
     // Use addRequirements() here to declare subsystem dependencies.
     this.swerve = swerve;
     this.pod = pod;

@@ -17,16 +17,16 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommand;
-import frc.robot.commands.PointPods;
+import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.ResetZeroes;
-import frc.robot.commands.TestPods;
-import frc.robot.subsystems.DIffySwerve;
+import frc.robot.commands.SpinManually;
+import frc.robot.subsystems.DiffySwerve;
 
 public class RobotContainer {
 
 	public static final XboxController driverRaw = new XboxController(Constants.driverPort);
 	public static final CommandXboxController driverCommand = new CommandXboxController(Constants.driverPort);
-	public static final DIffySwerve swerve = new DIffySwerve();
+	public static final DiffySwerve swerve = new DiffySwerve();
 
 	public RobotContainer() {
 		final var Odometry = Shuffleboard.getTab("Odometry");
@@ -45,8 +45,8 @@ public class RobotContainer {
 	}
 
 	private void configureBindings() {
-		driverCommand.pov(-1).onFalse(new TestPods(swerve, () -> getPodToTest(), () -> driverRaw.getRightX()));
-		driverCommand.rightTrigger().whileTrue(new PointPods(swerve, () -> new Translation2d(driverRaw.getRightX(), driverRaw.getRightY())));
+		driverCommand.pov(-1).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> driverRaw.getRightX()));
+		driverCommand.rightTrigger().whileTrue(new PointAndDrive(swerve, () -> new Translation2d(driverRaw.getRightX(), driverRaw.getRightY()), () -> driverRaw.getRightTriggerAxis()));
 
 		driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
 		// // driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));

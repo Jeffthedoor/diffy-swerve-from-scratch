@@ -14,11 +14,11 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.RobotConfig;
-import frc.robot.subsystems.DIffySwerve;
+import frc.robot.subsystems.DiffySwerve;
 
 public class DriveCommand extends Command {
 
-	DIffySwerve swerve;
+	DiffySwerve swerve;
 	Supplier<Translation2d> joystickRight, joystickLeft;
 	Supplier<Integer> DPAD;
 	Supplier<Boolean> boost;
@@ -28,7 +28,7 @@ public class DriveCommand extends Command {
 	private final SlewRateLimiter xLimiter = new SlewRateLimiter(0.75);
 	private final SlewRateLimiter yLimiter = new SlewRateLimiter(0.75);
 
-	public DriveCommand(DIffySwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight,
+	public DriveCommand(DiffySwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight,
 			Supplier<Integer> DPAD, Supplier<Boolean> boost) {
 		this.swerve = swerve;
 		this.joystickRight = joystickRight;

@@ -5,11 +5,11 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.DIffySwerve;
+import frc.robot.subsystems.DiffySwerve;
 
 public class ResetZeroes extends Command {
-  private DIffySwerve swerve;
-  public ResetZeroes(DIffySwerve swerve) {
+  private DiffySwerve swerve;
+  public ResetZeroes(DiffySwerve swerve) {
     this.swerve = swerve;
     addRequirements(swerve);
     // Use addRequirements() here to declare subsystem dependencies.

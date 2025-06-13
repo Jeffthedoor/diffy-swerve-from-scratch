@@ -10,17 +10,20 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.DIffySwerve;
+import frc.robot.subsystems.DiffySwerve;
 import frc.robot.subsystems.DrivePod;
 
-public class PointPods extends Command {
+public class PointAndDrive extends Command {
 
-	DIffySwerve swerve;
+	DiffySwerve swerve;
 	Supplier<Translation2d> joystickRight;
+	Rotation2d angle = new Rotation2d();
+	Supplier<Double> speed;
 
-	public PointPods(DIffySwerve swerve, Supplier<Translation2d> joystickRight) {
+	public PointAndDrive(DiffySwerve swerve, Supplier<Translation2d> joystickRight, Supplier<Double> speed) {
 		this.swerve = swerve;
 		this.joystickRight = joystickRight;
+		this.speed = speed;
 		addRequirements(swerve);
 	}
 
@@ -33,8 +36,10 @@ public class PointPods extends Command {
 	@Override
 	public void execute() {
 
-		Rotation2d angle = joystickRight.get().getAngle().plus(Rotation2d.kCCW_90deg).times(-1); // TODO: test if this offset is correct
-		SwerveModuleState state = new SwerveModuleState(0, angle);
+		if (joystickRight.get().getNorm() > 0.5) {
+			angle = joystickRight.get().getAngle().plus(Rotation2d.kCCW_90deg).times(-1); // TODO: test if this offset is correct
+		}
+		SwerveModuleState state = new SwerveModuleState(speed.get(), angle);
 		for (DrivePod pod : swerve.getPods()) {
 			pod.setPodState(state);
 		}
