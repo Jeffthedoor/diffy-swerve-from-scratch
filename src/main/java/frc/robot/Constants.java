@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -18,18 +19,14 @@ public final class Constants {
 	public final class RobotMap {
 		public static final double podRotationUpperBound = 210.0/360.0*0.5;
 		public static final double podRotationLowerBound = -210.0/360.0*0.5;
-		public static final double driveMetersPerMotorRotation = Units.inchesToMeters(2) * Math.PI / 1 / 0.36; // Wheel
-																												// Diameter
-																												// M *
-																												// PI /
-																												// Enc
-																												// Count
-																												// Per
-																												// Rev /
-																												// Gear
-																												// Ratio
+		public static final double driveMetersPerMotorRotation = Units.inchesToMeters(2) * Math.PI / 1 / 0.36; 
 
 		public static final int pigeonID = 25;
+
+		// Camera IDs. this is for individual camera-threads, but there's only one so its fine
+		public static enum CameraName {
+			front
+		}
 
 		public static final class PodConfig {
 			public final int leftMotorID;
