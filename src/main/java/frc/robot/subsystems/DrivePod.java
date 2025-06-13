@@ -6,11 +6,15 @@ package frc.robot.subsystems;
 
 import java.util.function.DoubleSupplier;
 
+import com.ctre.phoenix6.configs.CANcoderConfiguration;
 import com.ctre.phoenix6.configs.TalonFXSConfiguration;
 import com.ctre.phoenix6.controls.DutyCycleOut;
+import com.ctre.phoenix6.hardware.CANcoder;
 import com.ctre.phoenix6.hardware.TalonFXS;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
+import com.ctre.phoenix6.signals.SensorDirectionValue;
+import com.ctre.phoenix6.sim.CANcoderSimState;
 import com.ctre.phoenix6.sim.ChassisReference;
 import com.ctre.phoenix6.sim.TalonFXSSimState;
 
@@ -38,13 +42,14 @@ import frc.robot.Robot;
 /** This is a sample pod that uses a CANcoder and TalonFXes. */
 public class DrivePod extends SubsystemBase {
 	// public Encoder absoluteEncoder;
-	private TalonFXS leftMotor;
-	private TalonFXS rightMotor;
-	private AnalogEncoder encoder;
+	private final TalonFXS leftMotor;
+	private final TalonFXS rightMotor;
+	private final CANcoder encoder;
+	
 	private SwerveModuleState targetState = new SwerveModuleState();
 	private TalonFXSSimState leftMotorSim;
 	private TalonFXSSimState rightMotorSim;
-	private AnalogEncoderSim absoluteEncoderSim;
+	private CANcoderSimState absoluteEncoderSim;
 	private DifferentialDrivetrainSim drivetrainSim;
 
 	private DoublePublisher podScalarPublisher;
@@ -64,6 +69,7 @@ public class DrivePod extends SubsystemBase {
 
 	TalonFXSConfiguration leftConfig = new TalonFXSConfiguration();
 	TalonFXSConfiguration rightConfig = new TalonFXSConfiguration();
+	CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
 
 	private final PIDController anglePID;
 
@@ -93,10 +99,8 @@ public class DrivePod extends SubsystemBase {
 		leftMotor = makeMotor(leftID, leftInvert, brake, ampLimit, motorGearing, rampRate, leftConfig);
 		rightMotor = makeMotor(rightID, rightInvert, brake, ampLimit, motorGearing, rampRate, rightConfig);
 
+		encoder = makEncoder(absoluteEncoderID, encoderInvert, absoluteEncoderOffset);
 
-		encoder = new AnalogEncoder(absoluteEncoderID);
-		encoder.setInverted(false);	
-		this.offset = absoluteEncoderOffset;
 
 		anglePID = new PIDController(kP, kI, kD);
 		// anglePID.enableContinuousInput(0, 1);
@@ -159,6 +163,25 @@ public class DrivePod extends SubsystemBase {
 		return motor;
 	}
 
+
+    /**
+     * creates a new CANCoder
+     * @param id the CAN id of the sensor
+     * @param inverted true for CW+, false for CCW+
+     * @param offset the offset of the sensor in rotations
+     */
+    private CANcoder makEncoder(int id, boolean inverted, double offset) {
+        CANcoder encoder = new CANcoder(id);
+
+        encoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
+        encoderConfig.MagnetSensor.SensorDirection = inverted ? SensorDirectionValue.Clockwise_Positive : SensorDirectionValue.CounterClockwise_Positive;
+        encoderConfig.MagnetSensor.MagnetOffset = offset;
+
+        encoder.getConfigurator().apply(encoderConfig);
+
+        return encoder;
+    }
+
 	private void startLogging(int id) {
 		podScalarPublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("OutputScalar").publish();
 		encoderAnglePublisher = NetworkTableInstance.getDefault().getTable("pod states").getSubTable("pod" + id).getDoubleTopic("EncoderAngle").publish();
@@ -186,7 +209,7 @@ public class DrivePod extends SubsystemBase {
 	private void makeSim() {
 		leftMotorSim = leftMotor.getSimState();
 		rightMotorSim = rightMotor.getSimState();
-		absoluteEncoderSim = new AnalogEncoderSim(encoder);
+		absoluteEncoderSim = encoder.getSimState();
 
 
 		// left drivetrain motors are typically CCW+
@@ -217,17 +240,17 @@ public class DrivePod extends SubsystemBase {
 	public void resetPod() {
 		rightMotor.setPosition(0);
 		leftMotor.setPosition(0);
-		offset = -encoder.get();
+		offset = -(getAngle() - offset);
 	}
 
 	public void resetZero() {
-		offset = -encoder.get();
+		offset = -(getAngle() - offset);
 		resetPod();
 	}
 
 	// current position of absolute encoder in rotations
 	private double getAngle() {
-		return encoder.get() + offset;
+		return encoder.getAbsolutePosition().getValueAsDouble();
 	}
 
 	// average position accross drive motors
@@ -380,6 +403,6 @@ public class DrivePod extends SubsystemBase {
 		leftMotorSim.setRotorVelocity(drivetrainSim.getLeftVelocityMetersPerSecond() * metersToMotorRotations);
 		rightMotorSim.setRotorVelocity(drivetrainSim.getRightVelocityMetersPerSecond() * metersToMotorRotations);
 
-		absoluteEncoderSim.set(MathUtil.inputModulus(drivetrainSim.getHeading().getRotations(), -1,  1));
+		absoluteEncoderSim.setRawPosition(MathUtil.inputModulus(drivetrainSim.getHeading().getRotations(), -1,  1));
 	}
 }
