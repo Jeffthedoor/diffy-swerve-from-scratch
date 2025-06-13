@@ -22,8 +22,14 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.networktables.BooleanPublisher;
+import edu.wpi.first.networktables.DoublePublisher;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Robot;
 import frc.robot.Constants.RobotMap.CameraName;
@@ -51,7 +57,7 @@ public class PhotonVision extends SubsystemBase {
 
         try {
             // Attempt to load the AprilTag field layout from the specified JSON file
-            tagLayout = new AprilTagFieldLayout("/home/lvuser/deploy/AprilTag2023.json");
+            tagLayout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().toPath().resolve("tags.json"));
             camThread = new CameraThread(CameraName.front, new Transform3d(), tagLayout);
         } catch (Exception e) {
             // If the file is not found or there's an error, print a message
@@ -61,9 +67,8 @@ public class PhotonVision extends SubsystemBase {
 
         camThread.start();
 
+        //TODO: implement simulation
         // if (!Robot.isReal()) {
-        //     // TODO: update this to have multiple cameras
-
         //     visionTarget = new VisionTargetSim(VisionConstants.targetPose, VisionConstants.targetModel);
         //     cameraProp = new SimCameraProperties();
         //     visionSim = new VisionSystemSim("test");
@@ -71,7 +76,6 @@ public class PhotonVision extends SubsystemBase {
         //     visionSim.addVisionTargets(visionTarget);
         //     visionSim.addAprilTags(VisionConstants.tagLayout);
 
-        //     // TODO: set camera properties
         //     // cameraProp.setCalibration(640, 480, Rotation2d.fromDegrees(100));
         //     // cameraProp.setCalibError(0.25, 0.08);
         //     // cameraProp.setFPS(20);
@@ -181,93 +185,8 @@ public class PhotonVision extends SubsystemBase {
         }
     }
 
-    /**
-     * get the target's tag number
-     * @param camera - the camera to check
-     * @return FiducialID of tag with least ambiguity (-1 if no tag found)
-     */
-    public int getTagNum(CameraName camera) {
-        //this is performed independently of the thread, mainly because its a simple operation and happens regardless of pose
-        try {
-            if(!hasTarget(camera)){
-                throw new Exception("No target found");
-            } else {
-                switch(camera){
-                    case front:
-                        return camThread.getCameraObject().getLatestResult().getBestTarget().getFiducialId();
-
-                    default:
-                        throw new IllegalArgumentException("Invalid camera");
-                }
-            }
-        } catch (Exception e) {
-            DataLogManager.log("[PhotonVision] ERROR: NO TAG FOUND");
-            return -1;
-        }
-    }
-
-    /**
-     * get the target's tag number
-     * @param camera - the camera to check
-     * @return FiducialID of tag with least ambiguity (-1 if no tag found)
-     */
-    public Transform3d getTransformToTag(CameraName camera) throws Exception {
-        //this is performed independently of the thread, mainly because its a simple operation and happens regardless of pose
-        if(!hasTarget(camera)){
-            throw new Exception("No target found");
-        } else {
-            switch(camera){
-                case front:
-                    return camThread.getCameraObject().getLatestResult().getBestTarget().bestCameraToTarget;
-                default:
-                    throw new IllegalArgumentException("Invalid camera");
-            }
-        }
-    }
-
     private boolean isCameraInitialized(CameraName camName) {
         return camThread.cameraInitialized;
-    }
-
-    // @Override
-    // public void simulationPeriodic() {
-    //     visionSim.update(drivetrain.getPose());
-    //     LightningShuffleboard.send("Vision", "Field_SIM", visionSim.getDebugField());
-    // }
-
-
-    /**
-     * multicam imp'l of {@link #updateVision()}
-     * @param caller - the camera that called the function, used to determine which camera's pose to use
-     * @deprecated
-     */
-    private synchronized void updateVision(CameraName caller) {
-        // Tuple<EstimatedRobotPose, Double> leftUpdates = camThread.getUpdates();
-        // Tuple<EstimatedRobotPose, Double> rightUpdates = rightThread.getUpdates();
-
-        // final double maxAcceptableDist = 4d;
-        // boolean shouldUpdateLeft = true;
-        // boolean shouldUpdateRight = true;
-
-
-        // // prefer the camera that called the function (has known good values)
-        // // if the other camera has a target, prefer the one with the lower distance to best tag
-        // switch (caller) {
-        //     case LEFT:
-        //         if((rightThread.hasTarget() && rightUpdates.v < leftUpdates.v) && shouldUpdateRight) {
-        //             drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
-        //         } else if (shouldUpdateLeft) {
-        //             drivetrain.addVisionMeasurement(leftUpdates.k, leftUpdates.v);
-        //         }
-        //     break;
-        //     case RIGHT:
-        //         if((camThread.hasTarget() && leftUpdates.v < rightUpdates.v) && shouldUpdateLeft) {
-        //             drivetrain.addVisionMeasurement(leftUpdates.k, rightUpdates.v);
-        //         } else if (shouldUpdateRight) {
-        //             drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
-        //         }
-        //     break;
-        // }
     }
 
     private synchronized void updateVision() {
@@ -287,6 +206,12 @@ public class PhotonVision extends SubsystemBase {
         private boolean hasTarget = false;
         private AprilTagFieldLayout tags;
 
+        private final BooleanPublisher hasTargetPublisher;
+        private final DoublePublisher targetsFoundPublisher;
+        private final DoublePublisher timestampPublisher;
+        private final DoublePublisher distancePublisher;
+        private final StructPublisher<Pose3d> posePublisher;
+
         public boolean cameraInitialized = false;
 
         CameraThread(CameraName camName, Transform3d cameraPosition, AprilTagFieldLayout tagLayout) {
@@ -302,26 +227,36 @@ public class PhotonVision extends SubsystemBase {
 
             poseEstimator.setFieldTags(tags);
 
+            // Initialize NetworkTables publishers
+            hasTargetPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getBooleanTopic("hasTarget").publish();
+            targetsFoundPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("targetsFound").publish();
+            timestampPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("timestamp").publish();
+            distancePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("distance").publish();
+            posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getStructTopic("pose", Pose3d.struct).publish();
         }
 
         @Override
         public void run() {
             try {
+                //wait for the camera to bootup before initialization
                 sleep(3000);
             } catch (InterruptedException e) {
                 DataLogManager.log(camName.toString() + " sleep inital failed");
             }
+
+            //main loop for the camera thread
             while (true) {
                 if (!cameraInitialized) {
                     initializeCamera();
                 } else {
                     try {
+                        // main call to grab a set of results from the camera
                         List<PhotonPipelineResult> results = camera.getAllUnreadResults();
+
                         double numberOfResults = results.size(); //double to prevent integer division errors
                         double totalDistances = 0;
                         boolean hasTarget = false;
-                        double minDist = 100;
-                        double maxDist = 0;
+
                         //fundamentally, this loop updates the pose and distance for each result. It also logs the data to shuffleboard
                         //this is done in a thread-safe manner, as global variables are only updated at the end of the loop (no race conditions)
                         for (PhotonPipelineResult result : results) {
@@ -329,6 +264,7 @@ public class PhotonVision extends SubsystemBase {
                                 // the local hasTarget variable will turn true if ANY PipelineResult within this loop has a target
                                 hasTarget = true;
 
+                                // grabs the best target from the result and sends to pose estimator, iFF the pose ambiguity is below a (hardcoded) threshold
                                 if (!(result.getBestTarget().getPoseAmbiguity() > 0.5)) {
                                     poseEstimator.update(result).ifPresentOrElse(((pose) -> this.pose = pose), () -> {
                                         DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose not updated");
@@ -336,26 +272,18 @@ public class PhotonVision extends SubsystemBase {
                                 } else {
                                     DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose ambiguity is high");
                                 }
+
                                 // grabs the distance to the best target (for the latest set of result)
-                                double dist = result.getBestTarget().getBestCameraToTarget().getTranslation().getNorm();
-                                if (dist < minDist) {
-                                    minDist = dist;
-                                }
+                                totalDistances += result.getBestTarget().getBestCameraToTarget().getTranslation().getNorm();
 
-                                // if(dist > maxDist) {
-                                //     maxDist = dist;
-                                // }
-
-                                totalDistances += dist;
-
-                                // LightningShuffleboard.setBool("Vision", camName.toString() + " targets found", !result.targets.isEmpty());
-                                // LightningShuffleboard.setPose2d("Vision", camName.toString() + " pose", pose.estimatedPose.toPose2d());
-                                // LightningShuffleboard.setDouble("Vision", camName.toString() + " Timestamp", result.getTimestampSeconds());
-                                // LightningShuffleboard.setBool("Vision", camName.toString() + " hasTarget", true);
+                                hasTargetPublisher.set(true);
+                                targetsFoundPublisher.set(numberOfResults);
+                                timestampPublisher.set(result.getTimestampSeconds());
+                                distancePublisher.set(totalDistances / numberOfResults);
+                                posePublisher.set(pose.estimatedPose);
                             } else {
-                                //note there is no hasTarget = false here, as the variable should not be set to false if a target was found in a previous iteration
-                                // LightningShuffleboard.setBool("Vision", camName.toString() + " hasTarget", false);
-                                // LightningShuffleboard.setBool("Vision", camName.toString() + " functional", true);
+                                hasTargetPublisher.set(false);
+                                targetsFoundPublisher.set(0);
                             }
                         }
 
@@ -420,4 +348,41 @@ public class PhotonVision extends SubsystemBase {
             }
         }
     }
+
+
+
+    /**
+     * multicam imp'l of {@link #updateVision()}
+     * @param caller - the camera that called the function, used to determine which camera's pose to use
+     * @deprecated
+     */
+    private synchronized void updateVision(CameraName caller) {
+        // Tuple<EstimatedRobotPose, Double> leftUpdates = camThread.getUpdates();
+        // Tuple<EstimatedRobotPose, Double> rightUpdates = rightThread.getUpdates();
+
+        // final double maxAcceptableDist = 4d;
+        // boolean shouldUpdateLeft = true;
+        // boolean shouldUpdateRight = true;
+
+
+        // // prefer the camera that called the function (has known good values)
+        // // if the other camera has a target, prefer the one with the lower distance to best tag
+        // switch (caller) {
+        //     case LEFT:
+        //         if((rightThread.hasTarget() && rightUpdates.v < leftUpdates.v) && shouldUpdateRight) {
+        //             drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
+        //         } else if (shouldUpdateLeft) {
+        //             drivetrain.addVisionMeasurement(leftUpdates.k, leftUpdates.v);
+        //         }
+        //     break;
+        //     case RIGHT:
+        //         if((camThread.hasTarget() && leftUpdates.v < rightUpdates.v) && shouldUpdateLeft) {
+        //             drivetrain.addVisionMeasurement(leftUpdates.k, rightUpdates.v);
+        //         } else if (shouldUpdateRight) {
+        //             drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
+        //         }
+        //     break;
+        // }
+    }
+
 }
