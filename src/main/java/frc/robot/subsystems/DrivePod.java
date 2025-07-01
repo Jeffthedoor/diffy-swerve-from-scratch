@@ -99,7 +99,7 @@ public class DrivePod extends SubsystemBase {
 		leftMotor = makeMotor(leftID, leftInvert, brake, ampLimit, motorGearing, rampRate, leftConfig);
 		rightMotor = makeMotor(rightID, rightInvert, brake, ampLimit, motorGearing, rampRate, rightConfig);
 
-		encoder = makEncoder(absoluteEncoderID, encoderInvert, absoluteEncoderOffset);
+		encoder = makeEncoder(absoluteEncoderID, encoderInvert, absoluteEncoderOffset);
 
 
 		anglePID = new PIDController(kP, kI, kD);
@@ -170,10 +170,10 @@ public class DrivePod extends SubsystemBase {
      * @param inverted true for CW+, false for CCW+
      * @param offset the offset of the sensor in rotations
      */
-    private CANcoder makEncoder(int id, boolean inverted, double offset) {
+    private CANcoder makeEncoder(int id, boolean inverted, double offset) {
         CANcoder encoder = new CANcoder(id);
 
-        encoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 1;
+        encoderConfig.MagnetSensor.AbsoluteSensorDiscontinuityPoint = 0.5;
         encoderConfig.MagnetSensor.SensorDirection = inverted ? SensorDirectionValue.Clockwise_Positive : SensorDirectionValue.CounterClockwise_Positive;
         encoderConfig.MagnetSensor.MagnetOffset = offset;
 
@@ -289,27 +289,37 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public SwerveModuleState optimizePodHeading(SwerveModuleState state) {
-		while (state.angle.getRotations() - getState().angle.getRotations() > 0.25) {
-			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.minus(Rotation2d.k180deg));
-		} 
-		while (state.angle.getRotations() - getState().angle.getRotations() < -0.25) {
-			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.plus(Rotation2d.k180deg));
+		
+		state = new SwerveModuleState(state.speedMetersPerSecond, Rotation2d.fromRotations(state.angle.getRotations() % 1));
+		if (state.angle.getRotations() < -0.5) {
+			state = new SwerveModuleState(state.speedMetersPerSecond, state.angle.plus(Rotation2d.fromRotations(1)));
+		} else if (state.angle.getRotations() > 0.5) {
+			state = new SwerveModuleState(state.speedMetersPerSecond, state.angle.minus(Rotation2d.fromRotations(1)));
+		}
+		if (state.angle.getRotations() - getState().angle.getRotations() > 0.25) {
+			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.minus(Rotation2d.fromRotations(0.5)));
+		} else if (state.angle.getRotations() - getState().angle.getRotations() < -0.25) {
+			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.plus(Rotation2d.fromRotations(0.5)));
 		} 
 		// make sure pod is inside of possible rotation zone
-		while (state.angle.getRotations() > RobotMap.podRotationUpperBound) {
-			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.minus(Rotation2d.k180deg));
-		} 
-		while (state.angle.getRotations() < RobotMap.podRotationLowerBound) {
-			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.plus(Rotation2d.k180deg));
+		if (state.angle.getRotations() > RobotMap.podRotationUpperBound) {
+			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.minus(Rotation2d.fromRotations(0.5)));
+		} else if (state.angle.getRotations() < RobotMap.podRotationLowerBound) {
+			state = new SwerveModuleState(-state.speedMetersPerSecond, state.angle.plus(Rotation2d.fromRotations(0.5)));
 		} 
 		return state;
 	}
 
 	public void setPodState(SwerveModuleState state) {
+		setPodState(state, true);
+	}
+	public void setPodState(SwerveModuleState state, boolean resetTargetState) {
 		// optimize pod target heading based on current heading
 		state = optimizePodHeading(state);
 
-		targetState = state;
+		if (resetTargetState) {
+			targetState = state;
+		}
 		//initialize outputs to raw speed
 		double leftOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed; 
 		double rightOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed;; 
@@ -380,7 +390,7 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public boolean isTurning() {
-		return Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.03;
+		return Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.125;
 	}
 
 	public boolean isMoving() {
