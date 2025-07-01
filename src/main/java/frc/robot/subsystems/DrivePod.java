@@ -390,11 +390,11 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public boolean isTurning() {
-		return Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.125;
+		return isMoving() ? Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.1 : Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.03;
 	}
 
 	public boolean isMoving() {
-		return Math.abs(getState().speedMetersPerSecond) > 0.1;
+		return Math.abs(getState().speedMetersPerSecond) > 0.5;
 	}
 
 	@Override
