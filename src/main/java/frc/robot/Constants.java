@@ -61,10 +61,10 @@ public final class Constants {
 		private static final double wheelBase = 1.0;
 		private static final double trackWidth = 1.0;
 		public static final PodConfig[] PodConfigs = {
-			new PodConfig(0, 1, 11, 0d, new Translation2d(wheelBase / 2, trackWidth / 2)),
-			new PodConfig(3, 4, 12, 0d, new Translation2d(wheelBase / 2, -trackWidth / 2)),
-			new PodConfig(6, 7, 13, 0d, new Translation2d(-wheelBase / 2, trackWidth / 2)),
-			new PodConfig(9, 10, 14, 0d, new Translation2d(-wheelBase / 2, -trackWidth / 2))
+			new PodConfig(0, 1, 2, 0d, new Translation2d(wheelBase / 2, trackWidth / 2)),
+			new PodConfig(3, 4, 5, 0d, new Translation2d(wheelBase / 2, -trackWidth / 2)),
+			new PodConfig(6, 7, 8, 0d, new Translation2d(-wheelBase / 2, trackWidth / 2)),
+			new PodConfig(9, 10, 11, 0d, new Translation2d(-wheelBase / 2, -trackWidth / 2))
 		};
 		public static SwerveDriveKinematics drivetrainKinematics = new SwerveDriveKinematics(
 			java.util.Arrays.stream(PodConfigs)

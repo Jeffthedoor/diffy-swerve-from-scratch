@@ -332,7 +332,7 @@ public class DrivePod extends SubsystemBase {
 				//if pod in motion, slow down first with pod at current angle (or last known good angle)
 				targetState = new SwerveModuleState(0d, lastGoodTargetState.angle);
 			} else {
-				//if pod not in motion, slow down with pod at target angle
+				//if pod not in motion, turn to target angle without moving
 				targetState = new SwerveModuleState(0d, targetState.angle);
 			}
 
