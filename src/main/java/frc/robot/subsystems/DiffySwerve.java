@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import org.photonvision.EstimatedRobotPose;
@@ -50,6 +51,8 @@ public class DiffySwerve extends SubsystemBase {
 
 	private Pigeon2SimState gyroSimState;
 
+	private BooleanSupplier isTurningSupplier;
+
 	private final ArrayList<DrivePod> pods = new ArrayList<DrivePod>();
 
 	private final SwerveDriveOdometry odometer;
@@ -81,9 +84,11 @@ public class DiffySwerve extends SubsystemBase {
 
 
 		for (int i = 0; i < RobotMap.PodConfigs.length; i++) {
-			pods.add(new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, azimuthkP.doubleValue(), azimuthkI.doubleValue(), azimuthkD.doubleValue(), getGlobalOutputScalar(), PodConfig.motorGearing));
+			pods.add(new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, azimuthkP.doubleValue(), azimuthkI.doubleValue(), azimuthkD.doubleValue(), PodConfig.motorGearing));
 		}
-		
+
+		initializeSuppliers();
+
 		SwerveModulePosition positions[] = pods.stream()
 				.map(DrivePod::getPodPosition)
 				.toArray(SwerveModulePosition[]::new);
@@ -162,21 +167,8 @@ public class DiffySwerve extends SubsystemBase {
 
 		SwerveModuleState[] states = drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
 		SwerveDriveKinematics.desaturateWheelSpeeds(states, robotMaxSpeed);
-		if (isTurning()) {
-			if (isMoving()) {
-				for (int i = 0; i < pods.size(); i++) {
-					pods.get(i).setPodState(new SwerveModuleState(0, pods.get(i).getState().angle), false); // TODO: has bug
-					// pods[i].setPodState(new SwerveModuleState(0, pods[i].getState().angle)); // stop driving and don't change the azimuth angle; doesn't work because it changes the pod's "target angle" which disables "isTurning()" check
-				}
-			} else {
-				for (int i = 0; i < pods.size(); i++) {
-					pods.get(i).setPodState(new SwerveModuleState(0, states[i].angle)); // stop driving, but correct the azimuth angle
-				}
-			}
-		} else {
-			for (int i = 0; i < pods.size(); i++) {
-				pods.get(i).setPodState(states[i]);
-			}
+		for (int i = 0; i < pods.size(); i++) {
+			pods.get(i).setPodState(states[i]);
 		}
 	}
 
@@ -234,36 +226,39 @@ public class DiffySwerve extends SubsystemBase {
 		});
 	}
 
-	/**
-	 * Returns the maximum output scalar of all pods.
-	 * @return A DoubleSupplier that provides the maximum output scalar of all pods.
-	 */
-	private DoubleSupplier getGlobalOutputScalar() {
-		return () -> pods.stream()
+	private void initializeSuppliers() {
+		DoubleSupplier globalOutputScalar = () -> pods.stream()
 				.mapToDouble(DrivePod::getPodOutputScalar)
 				.max()
 				.orElse(0);
+				
+		BooleanSupplier isTurningSupplier = () -> pods.stream().anyMatch(DrivePod::isTurning);
+
+		for (DrivePod pod : pods) {
+			pod.initializeSuppliers(globalOutputScalar, isTurningSupplier);
+		}
 	}
+
 
 	public void addVisionMeasurement(EstimatedRobotPose visionPose, double distance) {
 		poseEstimator.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), Utils.fpgaToCurrentTime(visionPose.timestampSeconds), VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 	}
 
-	private boolean isTurning() {
-		for (DrivePod pod : pods) {
-			if (pod.isTurning()) {
-				return true;
-			}
-		}
-		return false;
-	}
+	// private boolean isTurning() {
+	// 	for (DrivePod pod : pods) {
+	// 		if (pod.isTurning()) {
+	// 			return true;
+	// 		}
+	// 	}
+	// 	return false;
+	// }
 	
-	private boolean isMoving() {
-		for (DrivePod pod : pods) {
-			if (pod.isMoving()) {
-				return true;
-			}
-		}
-		return false;
-	}
+	// private boolean isMoving() {
+	// 	for (DrivePod pod : pods) {
+	// 		if (pod.isMoving()) {
+	// 			return true;
+	// 		}
+	// 	}
+	// 	return false;
+	// }
 }

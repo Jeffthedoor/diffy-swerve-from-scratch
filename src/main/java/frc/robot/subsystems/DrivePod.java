@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import com.ctre.phoenix6.configs.CANcoderConfiguration;
@@ -46,12 +47,11 @@ public class DrivePod extends SubsystemBase {
 	private final TalonFXS rightMotor;
 	private final CANcoder encoder;
 	
-	private SwerveModuleState targetState = new SwerveModuleState();
 	private TalonFXSSimState leftMotorSim;
 	private TalonFXSSimState rightMotorSim;
 	private CANcoderSimState absoluteEncoderSim;
 	private DifferentialDrivetrainSim drivetrainSim;
-
+	
 	private DoublePublisher podScalarPublisher;
 	private DoublePublisher encoderAnglePublisher;
 	private DoublePublisher leftPositionPublisher;
@@ -64,14 +64,22 @@ public class DrivePod extends SubsystemBase {
 	
 	private double offset;
 
-	private double podOutputScalar = 1;
-	private final DoubleSupplier globalOutputScalar;
 
+
+	SwerveModuleState lastGoodTargetState = new SwerveModuleState(0, Rotation2d.fromRotations(0));
+	double zone = 10;
+	
+	private double podOutputScalar = 1;
+	private DoubleSupplier globalOutputScalar;
+	private BooleanSupplier otherPodTurning;
+	
 	TalonFXSConfiguration leftConfig = new TalonFXSConfiguration();
 	TalonFXSConfiguration rightConfig = new TalonFXSConfiguration();
 	CANcoderConfiguration encoderConfig = new CANcoderConfiguration();
 
 	private final PIDController anglePID;
+
+	private boolean isTurning = false;
 
 	/**
 	 * Creates a DrivePod with the specified parameters.
@@ -94,7 +102,7 @@ public class DrivePod extends SubsystemBase {
 	 */
 	public DrivePod(int podID, int absoluteEncoderID, int leftID, int rightID, boolean leftInvert, boolean rightInvert, double absoluteEncoderOffset,
 			boolean encoderInvert, int ampLimit, boolean brake,
-			double rampRate, double kP, double kI, double kD, DoubleSupplier globalMaxOutput, double motorGearing) {
+			double rampRate, double kP, double kI, double kD, double motorGearing) {
 
 		leftMotor = makeMotor(leftID, leftInvert, brake, ampLimit, motorGearing, rampRate, leftConfig);
 		rightMotor = makeMotor(rightID, rightInvert, brake, ampLimit, motorGearing, rampRate, rightConfig);
@@ -105,7 +113,6 @@ public class DrivePod extends SubsystemBase {
 		anglePID = new PIDController(kP, kI, kD);
 		// anglePID.enableContinuousInput(0, 1);
 
-		this.globalOutputScalar = globalMaxOutput;
 
 		resetPod();
 		startLogging(podID);
@@ -114,6 +121,12 @@ public class DrivePod extends SubsystemBase {
 			makeSim();
 		}
 	}
+
+	public void initializeSuppliers(DoubleSupplier gloabalMaxOutput, BooleanSupplier otherPodTurning) {
+		this.globalOutputScalar = gloabalMaxOutput;
+		this.otherPodTurning = otherPodTurning;
+	}
+
 	/**
 	 * Creates a TalonFXS motor with the given parameters.
 	 * @param id The CAN ID of the motor.
@@ -310,16 +323,34 @@ public class DrivePod extends SubsystemBase {
 		return state;
 	}
 
-	public void setPodState(SwerveModuleState state) {
-		setPodState(state, true);
+	private SwerveModuleState shouldSlowDown(SwerveModuleState targetState) {
+		isTurning = Math.abs(targetState.angle.minus(getState().angle).getDegrees()) > zone;
+
+		//large turn is requested
+		if(isTurning || otherPodTurning.getAsBoolean()) {
+			if(isMoving()) {
+				//if pod in motion, slow down first with pod at current angle (or last known good angle)
+				targetState = new SwerveModuleState(0d, lastGoodTargetState.angle);
+			} else {
+				//if pod not in motion, slow down with pod at target angle
+				targetState = new SwerveModuleState(0d, targetState.angle);
+			}
+
+			zone = 10;
+		} else {
+			//cache last known "good" target state
+			lastGoodTargetState = targetState;
+			zone = 45;
+		}
+
+		return targetState;
 	}
-	public void setPodState(SwerveModuleState state, boolean resetTargetState) {
+
+	public void setPodState(SwerveModuleState state) {
 		// optimize pod target heading based on current heading
 		state = optimizePodHeading(state);
+		state = shouldSlowDown(state);
 
-		if (resetTargetState) {
-			targetState = state;
-		}
 		//initialize outputs to raw speed
 		double leftOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed; 
 		double rightOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed;; 
@@ -389,12 +420,16 @@ public class DrivePod extends SubsystemBase {
 		updateLogging();
 	}
 
-	public boolean isTurning() {
-		return isMoving() ? Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.1 : Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.03;
-	}
+	// public boolean isTurning() {
+	// 	return isMoving() ? Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.1 : Math.abs(targetState.angle.minus(getState().angle).getRotations()) > 0.03;
+	// }
 
 	public boolean isMoving() {
 		return Math.abs(getState().speedMetersPerSecond) > 0.5;
+	}
+
+	public boolean isTurning() {
+		return isTurning;
 	}
 
 	@Override
