@@ -152,7 +152,7 @@ public class DiffySwerve extends SubsystemBase {
                 this::getPose, // Supplier of current robot pose
                 this::resetOdometry, // Consumer for seeding pose against auto
                 this::getCurrentRobotChassisSpeeds,
-                this::setRobotSpeeds, // Consumer for setting robot chassis speeds
+                (chassisSpeeds) -> setRobotSpeeds(chassisSpeeds, false), // Consumer for setting robot chassis speeds
                 new PPHolonomicDriveController(RobotConstants.TRANSLATION_PID, RobotConstants.ROTATION_PID),
                 RobotConstants.CONFIG,
                 () -> true,
@@ -213,11 +213,19 @@ public class DiffySwerve extends SubsystemBase {
 	}
 
 	/**
-	 * sets the robot's chassis speeds based on the given chassis speeds
-	 * 
+	 * sets the robot's chassis speeds based on the given chassis speeds, enables isTurning
 	 * @param chassisSpeeds the desired chassis speeds (+x forward, +y left, +omega counter-clockwise)
 	 */
 	public void setRobotSpeeds(ChassisSpeeds chassisSpeeds) {
+		setRobotSpeeds(chassisSpeeds, true);
+	}
+
+	/**
+	 * sets the robot's chassis speeds based on the given chassis speeds
+	 * @param chassisSpeeds the desired chassis speeds (+x forward, +y left, +omega counter-clockwise)
+	 * @param enableIsTurning if true, the robot will not move if any pod is turning and will not start turning if any pod is still moving
+	 */
+	public void setRobotSpeeds(ChassisSpeeds chassisSpeeds, boolean enableIsTurning) {
 		// for field-relative driving
 		// chassisSpeeds =
 		// ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds.vxMetersPerSecond,
@@ -230,7 +238,7 @@ public class DiffySwerve extends SubsystemBase {
 		SwerveDriveKinematics.desaturateWheelSpeeds(states, RobotConstants.robotMaxLinearSpeed);
 
 		for (int i = 0; i < pods.size(); i++) {
-			pods.get(i).setPodState(states[i]);
+			pods.get(i).setPodState(states[i], enableIsTurning);
 		}
 	}
 

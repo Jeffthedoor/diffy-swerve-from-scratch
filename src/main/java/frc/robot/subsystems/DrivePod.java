@@ -341,9 +341,19 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public void setPodState(SwerveModuleState state) {
+		setPodState(state, true);
+	}
+
+	/** 
+	 * sets the pod state
+	 * @param enableIsTurning if true, the robot will not move if any pod is turning and will not start turning if any pod is still moving
+	 */
+	public void setPodState(SwerveModuleState state, boolean enableIsTurning) {
 		// optimize pod target heading based on current heading
 		state = optimizePodHeading(state);
-		state = shouldSlowDown(state);
+		if (enableIsTurning) {
+			state = shouldSlowDown(state);
+		}
 
 		//initialize outputs to raw speed
 		double leftOutput = state.speedMetersPerSecond / RobotConstants.robotMaxLinearSpeed; 

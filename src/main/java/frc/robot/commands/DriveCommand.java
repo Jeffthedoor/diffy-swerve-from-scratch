@@ -39,7 +39,7 @@ public class DriveCommand extends Command {
 		double speedOmega = MathUtil.applyDeadband(-joystickLeftTranslation.getX(), JoystickConstants.deadband) * RobotConstants.robotMaxRotationalSpeed;
 		ChassisSpeeds speeds = new ChassisSpeeds(speedX, speedY, speedOmega);
 
-		swerve.setRobotSpeeds(speeds);
+		swerve.setRobotSpeeds(speeds, true);
 
 	}
 
