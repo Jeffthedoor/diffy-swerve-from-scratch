@@ -4,7 +4,6 @@
 
 package frc.robot;
 
-import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -76,7 +75,8 @@ public final class Constants {
 	public final class RobotConfig {
 		public static final PIDController gyroPID = new PIDController(0.046, 0d, 0.001);
 
-		public static final double robotMaxSpeed = 3.99; // meters per second
+		public static final double robotMaxLinearSpeed = 3.99; // meters per second
+		public static final double robotMaxRotationalSpeed = 3.0; // meters per second
 		public static final double motorMaxOutput = 1.0; // max output of the motors
 
 	}

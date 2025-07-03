@@ -18,7 +18,6 @@ import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.PointAndDrive;
-import frc.robot.commands.ResetZeroes;
 import frc.robot.commands.SpinManually;
 import frc.robot.subsystems.DiffySwerve;
 
@@ -34,9 +33,8 @@ public class RobotContainer {
 				driverRaw.getRightY());
 		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(driverRaw.getLeftX(),
 				driverRaw.getLeftY());
-		Supplier<Integer> DPAD = () -> driverRaw.getPOV();
 		swerve.setDefaultCommand(
-				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick, DPAD, driverRaw::getLeftBumperButton));
+				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
 
 		// swerve.setDefaultCommand(new RunCommand(() -> swerve.getPods()[0].setPodState(new SwerveModuleState(driverRaw.getLeftY(), Rotation2d.fromDegrees(driverRaw.getPOV() == -1 ? 0 : driverRaw.getPOV()))), swerve));
@@ -44,9 +42,8 @@ public class RobotContainer {
 
 	private void configureBindings() {
 		driverCommand.pov(-1).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> driverRaw.getRightX()));
-		driverCommand.rightTrigger().whileTrue(new PointAndDrive(swerve, () -> new Translation2d(driverRaw.getRightX(), driverRaw.getRightY()), () -> driverRaw.getRightTriggerAxis()));
+		driverCommand.leftTrigger().whileTrue(new PointAndDrive(swerve, () -> new Translation2d(driverRaw.getRightX(), driverRaw.getRightY()), () -> driverRaw.getRightTriggerAxis()));
 
-		driverCommand.rightBumper().and(driverRaw::getYButton).onTrue(new ResetZeroes(swerve));
 		// // driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));
 		driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
 	}

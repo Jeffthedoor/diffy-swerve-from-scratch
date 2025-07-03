@@ -32,7 +32,9 @@ public class SpinManually extends Command {
   // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
-    swerve.getPods()[pod.get()].setRotationalSpeed(command.get());
+    if (pod.get() != -1) {
+      swerve.getPods().get(pod.get()).setRotationalSpeed(command.get());
+    }
   }
 
   // Called once the command ends or is interrupted.
@@ -44,6 +46,6 @@ public class SpinManually extends Command {
   // Returns true when the command should end.
   @Override
   public boolean isFinished() {
-    return false;
+    return pod.get() == -1;
   }
 }

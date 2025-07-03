@@ -27,22 +27,17 @@ public class PointAndDrive extends Command {
 		addRequirements(swerve);
 	}
 
-	// Called when the command is initially scheduled.
-	@Override
-	public void initialize() {
-	}
-
 	// Called every time the scheduler runs while the command is scheduled.
 	@Override
 	public void execute() {
-
 		if (joystickRight.get().getNorm() > 0.5) {
 			angle = joystickRight.get().getAngle().plus(Rotation2d.kCCW_90deg).times(-1); // TODO: test if this offset is correct
 		}
 		SwerveModuleState state = new SwerveModuleState(speed.get(), angle);
-		for (DrivePod pod : swerve.getPods()) {
+
+		swerve.getPods().stream().forEach(pod -> {
 			pod.setPodState(state);
-		}
+		});
 
 	}
 

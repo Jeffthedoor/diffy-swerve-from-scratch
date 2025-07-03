@@ -121,7 +121,11 @@ public class DrivePod extends SubsystemBase {
 			makeSim();
 		}
 	}
-
+	/** 
+	 * sets local suppliers to global suppliers
+	 * @param globalMaxOutput normalization factor for the whole swerve drive
+	 * @param otherPodTurning whether a pod is currently turning a large angle (used to determine if the robot should stop moving before turning)
+	 */
 	public void initializeSuppliers(DoubleSupplier gloabalMaxOutput, BooleanSupplier otherPodTurning) {
 		this.globalOutputScalar = gloabalMaxOutput;
 		this.otherPodTurning = otherPodTurning;
@@ -249,16 +253,11 @@ public class DrivePod extends SubsystemBase {
 		// 		VecBuilder.fill(0.001, 0.001, 0.001, 0.1, 0.1, 0.005, 0.005));
 	}
 
-
+	/** resets the pod zero */
 	public void resetPod() {
 		rightMotor.setPosition(0);
 		leftMotor.setPosition(0);
 		offset = -(getAngle() - offset);
-	}
-
-	public void resetZero() {
-		offset = -(getAngle() - offset);
-		resetPod();
 	}
 
 	// current position of absolute encoder in rotations
@@ -291,11 +290,6 @@ public class DrivePod extends SubsystemBase {
 		return new SwerveModuleState(getVelocity(),
 				Rotation2d.fromRotations(getAngle()));
 	}
-
-	public void point(Rotation2d angle) {
-		setPodState(optimizePodHeading(new SwerveModuleState(0, angle)));
-	}
-
 
 	public void setPID(double kP, double kI, double kD) {
 		anglePID.setPID(kP, kI, kD);
@@ -352,8 +346,8 @@ public class DrivePod extends SubsystemBase {
 		state = shouldSlowDown(state);
 
 		//initialize outputs to raw speed
-		double leftOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed; 
-		double rightOutput = state.speedMetersPerSecond / RobotConfig.robotMaxSpeed;; 
+		double leftOutput = state.speedMetersPerSecond / RobotConfig.robotMaxLinearSpeed; 
+		double rightOutput = state.speedMetersPerSecond / RobotConfig.robotMaxLinearSpeed;; 
 
 		//adjust outputs based on the PID Controller
 		double correction = anglePID.calculate(getAngle(), state.angle.getRotations());

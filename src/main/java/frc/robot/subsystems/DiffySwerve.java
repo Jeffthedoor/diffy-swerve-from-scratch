@@ -5,7 +5,6 @@
 package frc.robot.subsystems;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
@@ -16,42 +15,35 @@ import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
 
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.networktables.GenericEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
-import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardTab;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.RobotMap;
-import frc.robot.Constants.RobotMap.PodConfig;
-import frc.robot.util.TunableNumber;
-import frc.robot.Robot;
 import frc.robot.Constants;
 import frc.robot.Constants.RobotConfig;
+import frc.robot.Constants.RobotMap;
+import frc.robot.Constants.RobotMap.PodConfig;
+import frc.robot.Robot;
+import frc.robot.util.TunableNumber;
 
 public class DiffySwerve extends SubsystemBase {
 	private final Pigeon2 gyro;
 
 	private Pigeon2SimState gyroSimState;
-
-	private BooleanSupplier isTurningSupplier;
 
 	private final ArrayList<DrivePod> pods = new ArrayList<DrivePod>();
 
@@ -63,12 +55,6 @@ public class DiffySwerve extends SubsystemBase {
 	private TunableNumber azimuthkD = new TunableNumber("azimuthkD", PodConfig.kD, "PID");
 
 	public double targetAngle = 0;
-	private double odoAngleOffset = Math.PI * 0.0;
-
-	private Rotation2d gyroResetAngle = new Rotation2d();
-
-	private SwerveDriveKinematics drivetrainKinematics;
-	private final double robotMaxSpeed;
 
 	private final Field2d field2d = new Field2d();
 
@@ -77,43 +63,75 @@ public class DiffySwerve extends SubsystemBase {
 	StructPublisher<ChassisSpeeds> ChassisSpeedsPublisher;
 
 	public DiffySwerve() {
-		this.drivetrainKinematics = RobotMap.drivetrainKinematics;
-		this.robotMaxSpeed = RobotConfig.robotMaxSpeed;
-
 		gyro = new Pigeon2(RobotMap.pigeonID);
 
-
 		for (int i = 0; i < RobotMap.PodConfigs.length; i++) {
-			pods.add(new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID, RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert, RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit, PodConfig.motorsBrake, PodConfig.rampRate, azimuthkP.doubleValue(), azimuthkI.doubleValue(), azimuthkD.doubleValue(), PodConfig.motorGearing));
+			pods.add(new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID,
+					RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert,
+					RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit,
+					PodConfig.motorsBrake, PodConfig.rampRate, azimuthkP.doubleValue(), azimuthkI.doubleValue(),
+					azimuthkD.doubleValue(), PodConfig.motorGearing));
 		}
 
+		// initialze suppliers for information-sharing between pods
 		initializeSuppliers();
 
+		// initialize pod positions
 		SwerveModulePosition positions[] = pods.stream()
 				.map(DrivePod::getPodPosition)
 				.toArray(SwerveModulePosition[]::new);
 
-		odometer = new SwerveDriveOdometry(drivetrainKinematics, new Rotation2d(0), positions);
+		// initialize odometry based on the pod positions
+		odometer = new SwerveDriveOdometry(RobotMap.drivetrainKinematics, new Rotation2d(0), positions);
 		poseEstimator = new SwerveDrivePoseEstimator(
-					drivetrainKinematics,
-					getGyro(),
-					getModulePositions(),
-					new Pose2d());
+				RobotMap.drivetrainKinematics,
+				getGyro(),
+				getModulePositions(),
+				new Pose2d());
 
 		// gyro.configAllSettings(new Pigeon2Configuration());
+		//TODO: make pigeon config if necessary
 
-		SMSPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("ModuleStates", SwerveModuleState.struct).publish();
+		// initialize telemetry publishers
+		SMSPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("ModuleStates", SwerveModuleState.struct)
+				.publish();
 		PosePublisher = NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish();
-		ChassisSpeedsPublisher = NetworkTableInstance.getDefault().getStructTopic("ChassisSpeeds", ChassisSpeeds.struct).publish();
+		ChassisSpeedsPublisher = NetworkTableInstance.getDefault().getStructTopic("ChassisSpeeds", ChassisSpeeds.struct)
+				.publish();
 
-		if(Robot.isSimulation()) {
+		if (Robot.isSimulation()) {
 			gyroSimState = new Pigeon2SimState(gyro);
 		}
 	}
 
+	@Override
+	public void periodic() {
+		//update odometry
+		odometer.update(getGyro(), getModulePositions());
+
+		//update telemetry
+		SmartDashboard.putNumber("pigeon", getGyro().getDegrees());
+
+		field2d.setRobotPose(odometer.getPoseMeters());
+
+		SMSPublisher.set(getModuleStates());
+		PosePublisher.set(odometer.getPoseMeters());
+		ChassisSpeedsPublisher.set(RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()));
+
+
+		// update the tunable numbers (if tuning mode is enabled)
+		if (Constants.tuningMode) {
+			if (azimuthkP.hasChanged() || azimuthkI.hasChanged() || azimuthkD.hasChanged()) {
+				setPIDs();
+			}
+		}
+	}
+
 	public void resetOdometry(Pose2d pose) {
-		odoAngleOffset = DriverStation.getAlliance().get() == Alliance.Red ? Math.PI * 0.5 : Math.PI * 1.5;
-		odometer.resetPosition(new Rotation2d(odoAngleOffset), getModulePositions(), pose);
+		// odoAngleOffset = DriverStation.getAlliance().get() == Alliance.Red ? Math.PI
+		// * 0.5 : Math.PI * 1.5;
+		// TODO: figure out why we were resetting odoAngleOffset 90 degrees off
+		odometer.resetPosition(new Rotation2d(), getModulePositions(), pose);
 	}
 
 	public SwerveModulePosition[] getModulePositions() {
@@ -128,110 +146,90 @@ public class DiffySwerve extends SubsystemBase {
 				.toArray(SwerveModuleState[]::new);
 	}
 
+	/**
+	 * resets the pods and odometry zero
+	 */
 	public void resetPods() {
 		resetGyro();
-		for (DrivePod pod : pods) {
-			pod.resetPod();
-		}
+		pods.stream().forEach(DrivePod::resetPod);
 
-		//TODO: wtf hardcoded??
-		resetOdometry(new Pose2d(new Translation2d(8.0, 4.2), new Rotation2d()));
+		resetOdometry(new Pose2d());
 	}
 
-	public void resetZero() {
-		for (DrivePod pod : pods) {
-			pod.resetZero();
-		}	
-	}
-
+	/**
+	 * sets all motor output to 0
+	 */
 	public void stop() {
-		for (DrivePod pod : pods) {
-			pod.stop();
-		}
+		pods.stream().forEach(DrivePod::stop);
 	}
 
 	public Rotation2d getGyro() {
-		return gyro.getRotation2d().minus(gyroResetAngle);
+		return gyro.getRotation2d();
 	}
 
 	public void resetGyro() {
-		gyroResetAngle = getGyro().plus(gyroResetAngle);
-		targetAngle = 0;
+		gyro.setYaw(0);
 	}
 
+	/**
+	 * sets the robot's chassis speeds based on the given chassis speeds
+	 * 
+	 * @param chassisSpeeds the desired chassis speeds (+x forward, +y left, +omega counter-clockwise)
+	 */
 	public void setRobotSpeeds(ChassisSpeeds chassisSpeeds) {
-		chassisSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds.vxMetersPerSecond,
-				chassisSpeeds.vyMetersPerSecond,
-				chassisSpeeds.omegaRadiansPerSecond * 3.0, // TODO: magic number, please remove
-				getGyro());
+		// for field-relative driving
+		// chassisSpeeds =
+		// ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds.vxMetersPerSecond,
+		// chassisSpeeds.vyMetersPerSecond,
+		// chassisSpeeds.omegaRadiansPerSecond,
+		// getGyro());
 
-		SwerveModuleState[] states = drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
-		SwerveDriveKinematics.desaturateWheelSpeeds(states, robotMaxSpeed);
+
+		SwerveModuleState[] states = RobotMap.drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
+		SwerveDriveKinematics.desaturateWheelSpeeds(states, RobotConfig.robotMaxLinearSpeed);
+
 		for (int i = 0; i < pods.size(); i++) {
 			pods.get(i).setPodState(states[i]);
 		}
 	}
 
-	public DrivePod[] getPods() {
-		return (DrivePod[]) pods.toArray();
+	public ArrayList<DrivePod> getPods() {
+		return pods;
 	}
 
 	@Override
 	public void simulationPeriodic() {
-		//update the gyro to functionally be the robot/odo angle
-		gyroSimState.setAngularVelocityZ(RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond);
+		// update the gyro to functionally be the robot/odo angle
+		gyroSimState.setAngularVelocityZ(
+				RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond);
 	}
 
-	@Override
-	public void periodic() {	
-
-		odometer.update(getGyro(), getModulePositions());
-		SmartDashboard.putNumber("pigeon", getGyro().getDegrees());
-		field2d.setRobotPose(odometer.getPoseMeters()
-				.transformBy(new Transform2d(new Translation2d(), new Rotation2d(odoAngleOffset + Math.PI))));
-
-		SMSPublisher.set(getModuleStates());
-		PosePublisher.set(odometer.getPoseMeters());
-		ChassisSpeedsPublisher.set(drivetrainKinematics.toChassisSpeeds(getModuleStates()));
-
-
-		if(Constants.tuningMode) {
-			// update the tunable numbers
-			if (azimuthkP.hasChanged() || azimuthkI.hasChanged() || azimuthkD.hasChanged()) {
-				setPIDs();
-			}
-		}
-
-
-		// uncomment these lines for azimuth tuning
-		// leftPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS),
-		// azimuthP.getDouble(SkywarpConfig.azimuthkP),
-		// azimuthI.getDouble(SkywarpConfig.azimuthkI),
-		// azimuthD.getDouble(SkywarpConfig.azimuthkD), 1,
-		// ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
-		// rightPod.setPID(azimuthkS.getDouble(SkywarpConfig.azimuthkS),
-		// azimuthP.getDouble(SkywarpConfig.azimuthkP),
-		// azimuthI.getDouble(SkywarpConfig.azimuthkI),
-		// azimuthD.getDouble(SkywarpConfig.azimuthkD), 1,
-		// ADMult.getDouble(SkywarpConfig.azimuthMaxOutput));
-	}
-
+	
+	/** 
+	 * sets the PIDs for each pod based on the tunable numbers
+	*/
 	private void setPIDs() {
 		pods.forEach(pod -> {
 			pod.setPID(
-				azimuthkP.doubleValue(),
-				azimuthkI.doubleValue(),
-				azimuthkD.doubleValue()
-			);
+					azimuthkP.doubleValue(),
+					azimuthkI.doubleValue(),
+					azimuthkD.doubleValue());
 		});
 	}
 
+	/**
+	 * initializes the suppliers for each pod to share information, specifically the
+	 * global output scalar (for normalization)
+	 * and whether any pod is turning (for safe/slow turning)
+	 * 
+	 * this MUST be called directly after initizliation
+	 */
 	private void initializeSuppliers() {
 		DoubleSupplier globalOutputScalar = () -> pods.stream()
 				.mapToDouble(DrivePod::getPodOutputScalar)
 				.max()
 				.orElse(0);
-				
+
 		BooleanSupplier isTurningSupplier = () -> pods.stream().anyMatch(DrivePod::isTurning);
 
 		for (DrivePod pod : pods) {
@@ -239,26 +237,17 @@ public class DiffySwerve extends SubsystemBase {
 		}
 	}
 
-
+	/**
+	 * accepts a vision measurement for pose estimation
+	 * 
+	 * @param visionPose estimated pose from the vision system
+	 * @param distance   distance from the vision target to the robot, used for
+	 *                   uncertainty in the pose estimation
+	 */
 	public void addVisionMeasurement(EstimatedRobotPose visionPose, double distance) {
-		poseEstimator.addVisionMeasurement(visionPose.estimatedPose.toPose2d(), Utils.fpgaToCurrentTime(visionPose.timestampSeconds), VecBuilder.fill(distance / 2, distance / 2, distance / 2));
+		poseEstimator.addVisionMeasurement(visionPose.estimatedPose.toPose2d(),
+				Utils.fpgaToCurrentTime(visionPose.timestampSeconds),
+				// just a hardcoded /2 for now, this can be tuned further. This just decreases pose certainty as distance increases.
+				VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 	}
-
-	// private boolean isTurning() {
-	// 	for (DrivePod pod : pods) {
-	// 		if (pod.isTurning()) {
-	// 			return true;
-	// 		}
-	// 	}
-	// 	return false;
-	// }
-	
-	// private boolean isMoving() {
-	// 	for (DrivePod pod : pods) {
-	// 		if (pod.isMoving()) {
-	// 			return true;
-	// 		}
-	// 	}
-	// 	return false;
-	// }
 }
