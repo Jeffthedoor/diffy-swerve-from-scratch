@@ -6,7 +6,8 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.Constants.RobotConfig;
+import frc.robot.Constants.JoystickConstants;
+import frc.robot.Constants.RobotConstants;
 import frc.robot.subsystems.DiffySwerve;
 
 public class DriveCommand extends Command {
@@ -33,9 +34,9 @@ public class DriveCommand extends Command {
 
 		// x and y are swapped because WPILib has +x as forward for some reason
 		// also joystick y is negated because thats how joysticks work
-		double speedX = MathUtil.applyDeadband(-joystickRightTranslation.getY(), 0.05) * RobotConfig.robotMaxLinearSpeed;
-		double speedY = MathUtil.applyDeadband(joystickRightTranslation.getX(), 0.05) * RobotConfig.robotMaxLinearSpeed;
-		double speedOmega = MathUtil.applyDeadband(joystickLeftTranslation.getX(), 0.07) * RobotConfig.robotMaxRotationalSpeed;
+		double speedX = MathUtil.applyDeadband(-joystickRightTranslation.getY(), JoystickConstants.deadband) * RobotConstants.robotMaxLinearSpeed;
+		double speedY = MathUtil.applyDeadband(-joystickRightTranslation.getX(), JoystickConstants.deadband) * RobotConstants.robotMaxLinearSpeed;
+		double speedOmega = MathUtil.applyDeadband(-joystickLeftTranslation.getX(), JoystickConstants.deadband) * RobotConstants.robotMaxRotationalSpeed;
 		ChassisSpeeds speeds = new ChassisSpeeds(speedX, speedY, speedOmega);
 
 		swerve.setRobotSpeeds(speeds);

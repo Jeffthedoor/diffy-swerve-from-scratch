@@ -13,6 +13,8 @@ import org.photonvision.EstimatedRobotPose;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -25,6 +27,9 @@ import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.networktables.DoubleEntry;
+import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.networktables.StructPublisher;
@@ -34,11 +39,10 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.Constants.RobotConfig;
+import frc.robot.Constants.RobotConstants;
 import frc.robot.Constants.RobotMap;
 import frc.robot.Constants.RobotMap.PodConfig;
 import frc.robot.Robot;
-import frc.robot.util.TunableNumber;
 
 public class DiffySwerve extends SubsystemBase {
 	private final Pigeon2 gyro;
@@ -50,10 +54,6 @@ public class DiffySwerve extends SubsystemBase {
 	private final SwerveDriveOdometry odometer;
 	private final SwerveDrivePoseEstimator poseEstimator;
 
-	private TunableNumber azimuthkP = new TunableNumber("azimuthkP", PodConfig.kP, "PID");
-	private TunableNumber azimuthkI = new TunableNumber("azimuthkI", PodConfig.kI, "PID");
-	private TunableNumber azimuthkD = new TunableNumber("azimuthkD", PodConfig.kD, "PID");
-
 	public double targetAngle = 0;
 
 	private final Field2d field2d = new Field2d();
@@ -61,6 +61,11 @@ public class DiffySwerve extends SubsystemBase {
 	StructArrayPublisher<SwerveModuleState> SMSPublisher;
 	StructPublisher<Pose2d> PosePublisher;
 	StructPublisher<ChassisSpeeds> ChassisSpeedsPublisher;
+	DoubleEntry azimuthkPSub;
+	DoubleEntry azimuthkISub;
+	DoubleEntry azimuthkDSub;
+
+	double simGyroPosition = 0;
 
 	public DiffySwerve() {
 		gyro = new Pigeon2(RobotMap.pigeonID);
@@ -69,8 +74,7 @@ public class DiffySwerve extends SubsystemBase {
 			pods.add(new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID,
 					RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert,
 					RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit,
-					PodConfig.motorsBrake, PodConfig.rampRate, azimuthkP.doubleValue(), azimuthkI.doubleValue(),
-					azimuthkD.doubleValue(), PodConfig.motorGearing));
+					PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.kP, PodConfig.kI, PodConfig.kD, PodConfig.motorGearing));
 		}
 
 		// initialze suppliers for information-sharing between pods
@@ -99,6 +103,19 @@ public class DiffySwerve extends SubsystemBase {
 		ChassisSpeedsPublisher = NetworkTableInstance.getDefault().getStructTopic("ChassisSpeeds", ChassisSpeeds.struct)
 				.publish();
 
+		// initialize PID subscribers
+		if(Constants.tuningMode) {
+			azimuthkPSub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kP").getEntry(PodConfig.kP);
+			azimuthkISub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kI").getEntry(PodConfig.kI);
+			azimuthkDSub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kD").getEntry(PodConfig.kD);
+
+			azimuthkPSub.set(PodConfig.kP);
+			azimuthkISub.set(PodConfig.kI);
+			azimuthkDSub.set(PodConfig.kD);
+
+			azimuthkDSub.getAtomic();
+		}
+
 		if (Robot.isSimulation()) {
 			gyroSimState = new Pigeon2SimState(gyro);
 		}
@@ -119,11 +136,14 @@ public class DiffySwerve extends SubsystemBase {
 		ChassisSpeedsPublisher.set(RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()));
 
 
-		// update the tunable numbers (if tuning mode is enabled)
+		// update the numbers (if tuning mode is enabled)
 		if (Constants.tuningMode) {
-			if (azimuthkP.hasChanged() || azimuthkI.hasChanged() || azimuthkD.hasChanged()) {
-				setPIDs();
-			}
+			pods.forEach(pod -> {
+			pod.setPID(
+					azimuthkPSub.get(),
+					azimuthkISub.get(),
+					azimuthkDSub.get());
+		});
 		}
 	}
 
@@ -186,7 +206,7 @@ public class DiffySwerve extends SubsystemBase {
 
 
 		SwerveModuleState[] states = RobotMap.drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
-		SwerveDriveKinematics.desaturateWheelSpeeds(states, RobotConfig.robotMaxLinearSpeed);
+		SwerveDriveKinematics.desaturateWheelSpeeds(states, RobotConstants.robotMaxLinearSpeed);
 
 		for (int i = 0; i < pods.size(); i++) {
 			pods.get(i).setPodState(states[i]);
@@ -200,21 +220,8 @@ public class DiffySwerve extends SubsystemBase {
 	@Override
 	public void simulationPeriodic() {
 		// update the gyro to functionally be the robot/odo angle
-		gyroSimState.setAngularVelocityZ(
-				RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond);
-	}
-
-	
-	/** 
-	 * sets the PIDs for each pod based on the tunable numbers
-	*/
-	private void setPIDs() {
-		pods.forEach(pod -> {
-			pod.setPID(
-					azimuthkP.doubleValue(),
-					azimuthkI.doubleValue(),
-					azimuthkD.doubleValue());
-		});
+		simGyroPosition += Units.radiansToDegrees(RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()).omegaRadiansPerSecond) * Robot.kDefaultPeriod;
+		gyroSimState.setRawYaw(simGyroPosition);
 	}
 
 	/**

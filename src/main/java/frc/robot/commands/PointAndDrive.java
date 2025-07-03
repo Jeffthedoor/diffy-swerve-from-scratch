@@ -19,7 +19,12 @@ public class PointAndDrive extends Command {
 	Supplier<Translation2d> joystickRight;
 	Rotation2d angle = new Rotation2d();
 	Supplier<Double> speed;
-
+	/** 
+	 * point the swerve pods in the direction of the joystick
+	 * @param swerve the swerve subsystem
+	 * @param joystickRight the direction to point in
+	 * @param speed the speed to drive at, 0-1
+	 */
 	public PointAndDrive(DiffySwerve swerve, Supplier<Translation2d> joystickRight, Supplier<Double> speed) {
 		this.swerve = swerve;
 		this.joystickRight = joystickRight;
@@ -27,7 +32,6 @@ public class PointAndDrive extends Command {
 		addRequirements(swerve);
 	}
 
-	// Called every time the scheduler runs while the command is scheduled.
 	@Override
 	public void execute() {
 		if (joystickRight.get().getNorm() > 0.5) {
@@ -41,13 +45,11 @@ public class PointAndDrive extends Command {
 
 	}
 
-	// Called once the command ends or is interrupted.
 	@Override
 	public void end(boolean interrupted) {
 		swerve.stop();
 	}
 
-	// Returns true when the command should end.
 	@Override
 	public boolean isFinished() {
 		return false;

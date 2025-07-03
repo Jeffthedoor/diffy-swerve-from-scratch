@@ -16,51 +16,53 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.Constants.JoystickConstants;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.SpinManually;
 import frc.robot.subsystems.DiffySwerve;
 
 public class RobotContainer {
-
-	public static final XboxController driverRaw = new XboxController(Constants.driverPort);
-	public static final CommandXboxController driverCommand = new CommandXboxController(Constants.driverPort);
+	public static final CommandXboxController joystick = new CommandXboxController(JoystickConstants.driverPort);
 	public static final DiffySwerve swerve = new DiffySwerve();
 
 	public RobotContainer() {
-		configureBindings();
-		Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(driverRaw.getRightX(),
-				driverRaw.getRightY());
-		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(driverRaw.getLeftX(),
-				driverRaw.getLeftY());
+		//manually spin individual pods based on dpad input + right joystick input
+		joystick.pov(-1).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> joystick.getRightX()));
+
+		//point all pods at an angle based on right joystick input
+		joystick.leftTrigger().whileTrue(new PointAndDrive(swerve, () -> new Translation2d(joystick.getRightX(), joystick.getRightY()), () -> joystick.getRightTriggerAxis()));
+
+		joystick.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
+
+
+		//drive bindings
+		Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(joystick.getRightX(),
+				joystick.getRightY());
+		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(joystick.getLeftX(),
+				joystick.getLeftY());
 		swerve.setDefaultCommand(
 				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
 
-		// swerve.setDefaultCommand(new RunCommand(() -> swerve.getPods()[0].setPodState(new SwerveModuleState(driverRaw.getLeftY(), Rotation2d.fromDegrees(driverRaw.getPOV() == -1 ? 0 : driverRaw.getPOV()))), swerve));
-	}
-
-	private void configureBindings() {
-		driverCommand.pov(-1).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> driverRaw.getRightX()));
-		driverCommand.leftTrigger().whileTrue(new PointAndDrive(swerve, () -> new Translation2d(driverRaw.getRightX(), driverRaw.getRightY()), () -> driverRaw.getRightTriggerAxis()));
-
-		// // driverCommand.rightBumper().and(driverRaw::getXButton).whileTrue(new RevertZeroes(swerve));
-		driverCommand.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
+		// PID tuning/testing function. just sets FL pod to DPAD angle.
+		// swerve.setDefaultCommand(new RunCommand(() -> swerve.getPods().get(0).setPodState(new SwerveModuleState(joystick.getLeftY(), Rotation2d.fromDegrees(joystick.getHID().getPOV()))), swerve));
 	}
 	
 	private int getPodToTest() {
-		switch (driverRaw.getPOV()) {
+		switch (joystick.getHID().getPOV()) {
 			case 0:
-				return 0;
+				return 0; //FL
 			case 90:
-				return 1;
+				return 1; //FR
 			case 180:
-				return 2;
+				return 3; //BR
 			case 270:
-				return 3;
+				return 2; //BL
 			default:
 				return -1;
 		}
+		
 	}
 
 	public Command getAutonomousCommand() {

@@ -9,7 +9,7 @@ import frc.robot.Constants;
  * value not in dashboard.
  */
 public class TunableNumber extends Number{
-    private final String tableKey = "TunableNumbers";
+    private String tableKey = "TunableNumbers";
 
     private String key;
     private double defaultValue;
@@ -17,14 +17,6 @@ public class TunableNumber extends Number{
 
     private DoubleSubscriber subscriber;
 
-    /**
-     * Create a new TunableNumber
-     * 
-     * @param name Key on dashboard
-     */
-    private TunableNumber(String name) {
-        this.key = tableKey + "/" + name;
-    }
 
     /**
      * Create a new TunableNumber with the default value
@@ -33,7 +25,7 @@ public class TunableNumber extends Number{
      * @param defaultValue Default value
      */
     public TunableNumber(String name, double defaultValue) {
-        this(name);
+        this.key = tableKey + "/" + name;
         setDefault(defaultValue);
     }
 
@@ -44,8 +36,8 @@ public class TunableNumber extends Number{
      * @param defaultValue Default value
      */
     public TunableNumber(String name, double defaultValue, String tableKey) {
-        this(name);
-        this.key = tableKey;
+        this.tableKey = tableKey;
+        this.key = tableKey + "/" + name;
         setDefault(defaultValue);
     }
 

@@ -33,10 +33,9 @@ import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotGearing;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotMotor;
 import edu.wpi.first.wpilibj.simulation.DifferentialDrivetrainSim.KitbotWheelSize;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants.RobotConfig;
+import frc.robot.Constants.RobotConstants;
 import frc.robot.Constants.RobotMap;
 import frc.robot.Constants.SimConstants;
-import frc.robot.util.TunableNumber;
 import frc.robot.Constants;
 import frc.robot.Robot;
 
@@ -267,7 +266,9 @@ public class DrivePod extends SubsystemBase {
 
 	// average position accross drive motors
 	private double getPosition() {
-		return (leftMotor.getPosition().getValueAsDouble() + rightMotor.getPosition().getValueAsDouble()) / 2;
+		// return (leftMotor.getPosition().getValueAsDouble() + rightMotor.getPosition().getValueAsDouble()) / 2;
+		return (drivetrainSim.getLeftPositionMeters() + drivetrainSim.getRightPositionMeters()) / 2;
+		//TODO: for the love of god change this before it goes on a robot
 	}
 
 	private double getVelocity() {
@@ -346,8 +347,8 @@ public class DrivePod extends SubsystemBase {
 		state = shouldSlowDown(state);
 
 		//initialize outputs to raw speed
-		double leftOutput = state.speedMetersPerSecond / RobotConfig.robotMaxLinearSpeed; 
-		double rightOutput = state.speedMetersPerSecond / RobotConfig.robotMaxLinearSpeed;; 
+		double leftOutput = state.speedMetersPerSecond / RobotConstants.robotMaxLinearSpeed; 
+		double rightOutput = state.speedMetersPerSecond / RobotConstants.robotMaxLinearSpeed;; 
 
 		//adjust outputs based on the PID Controller
 		double correction = anglePID.calculate(getAngle(), state.angle.getRotations());
@@ -361,8 +362,8 @@ public class DrivePod extends SubsystemBase {
 
 
 		//if the pod output is greater than what the motor can output, scale it down
-		if (podMaxOutput > RobotConfig.motorMaxOutput) {
-			podOutputScalar = RobotConfig.motorMaxOutput / podMaxOutput;
+		if (podMaxOutput > RobotConstants.motorMaxOutput) {
+			podOutputScalar = RobotConstants.motorMaxOutput / podMaxOutput;
 
 			//if the calculated power scalar for the pod is greater than the global scalar, scale the outputs down by the pod scalar
 			//otherwise, scale the outputs down by the global scalar. It is assumed that the global scalar will update within a loop cycle.
