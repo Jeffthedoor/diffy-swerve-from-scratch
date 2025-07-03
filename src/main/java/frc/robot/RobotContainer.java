@@ -6,11 +6,16 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -23,8 +28,9 @@ import frc.robot.commands.SpinManually;
 import frc.robot.subsystems.DiffySwerve;
 
 public class RobotContainer {
-	public static final CommandXboxController joystick = new CommandXboxController(JoystickConstants.driverPort);
-	public static final DiffySwerve swerve = new DiffySwerve();
+	private final CommandXboxController joystick = new CommandXboxController(JoystickConstants.driverPort);
+	private final DiffySwerve swerve = new DiffySwerve();
+	private final SendableChooser<Command> autoChooser;
 
 	public RobotContainer() {
 		//manually spin individual pods based on dpad input + right joystick input
@@ -47,6 +53,9 @@ public class RobotContainer {
 
 		// PID tuning/testing function. just sets FL pod to DPAD angle.
 		// swerve.setDefaultCommand(new RunCommand(() -> swerve.getPods().get(0).setPodState(new SwerveModuleState(joystick.getLeftY(), Rotation2d.fromDegrees(joystick.getHID().getPOV()))), swerve));
+	
+		autoChooser = AutoBuilder.buildAutoChooser();
+		SmartDashboard.putData(AutoBuilder.buildAutoChooser());
 	}
 	
 	private int getPodToTest() {
@@ -66,6 +75,6 @@ public class RobotContainer {
 	}
 
 	public Command getAutonomousCommand() {
-		return Commands.print("No autonomous command configured");
+		return autoChooser.getSelected();
 	}
 }

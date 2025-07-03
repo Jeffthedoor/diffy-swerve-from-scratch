@@ -13,6 +13,7 @@ import org.photonvision.EstimatedRobotPose;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.hardware.Pigeon2;
 import com.ctre.phoenix6.sim.Pigeon2SimState;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
@@ -24,7 +25,6 @@ import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
-import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.util.Units;
@@ -51,7 +51,6 @@ public class DiffySwerve extends SubsystemBase {
 
 	private final ArrayList<DrivePod> pods = new ArrayList<DrivePod>();
 
-	private final SwerveDriveOdometry odometer;
 	private final SwerveDrivePoseEstimator poseEstimator;
 
 	public double targetAngle = 0;
@@ -86,12 +85,13 @@ public class DiffySwerve extends SubsystemBase {
 				.toArray(SwerveModulePosition[]::new);
 
 		// initialize odometry based on the pod positions
-		odometer = new SwerveDriveOdometry(RobotMap.drivetrainKinematics, new Rotation2d(0), positions);
 		poseEstimator = new SwerveDrivePoseEstimator(
 				RobotMap.drivetrainKinematics,
 				getGyro(),
 				getModulePositions(),
 				new Pose2d());
+
+		configurePathPlanner();
 
 		// gyro.configAllSettings(new Pigeon2Configuration());
 		//TODO: make pigeon config if necessary
@@ -124,15 +124,15 @@ public class DiffySwerve extends SubsystemBase {
 	@Override
 	public void periodic() {
 		//update odometry
-		odometer.update(getGyro(), getModulePositions());
+		poseEstimator.update(getGyro(), getModulePositions());
 
 		//update telemetry
 		SmartDashboard.putNumber("pigeon", getGyro().getDegrees());
 
-		field2d.setRobotPose(odometer.getPoseMeters());
+		field2d.setRobotPose(getPose());
 
 		SMSPublisher.set(getModuleStates());
-		PosePublisher.set(odometer.getPoseMeters());
+		PosePublisher.set(getPose());
 		ChassisSpeedsPublisher.set(RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates()));
 
 
@@ -147,11 +147,32 @@ public class DiffySwerve extends SubsystemBase {
 		}
 	}
 
+	private void configurePathPlanner() {
+        AutoBuilder.configure(
+                this::getPose, // Supplier of current robot pose
+                this::resetOdometry, // Consumer for seeding pose against auto
+                this::getCurrentRobotChassisSpeeds,
+                this::setRobotSpeeds, // Consumer for setting robot chassis speeds
+                new PPHolonomicDriveController(RobotConstants.TRANSLATION_PID, RobotConstants.ROTATION_PID),
+                RobotConstants.CONFIG,
+                () -> true,
+                this); // Subsystem for requirements
+    }
+
+	private ChassisSpeeds getCurrentRobotChassisSpeeds() {
+		// get the current robot chassis speeds
+		return RobotMap.drivetrainKinematics.toChassisSpeeds(getModuleStates());
+	}
+
+	public Pose2d getPose() {
+		return poseEstimator.getEstimatedPosition();
+	}
+
 	public void resetOdometry(Pose2d pose) {
 		// odoAngleOffset = DriverStation.getAlliance().get() == Alliance.Red ? Math.PI
 		// * 0.5 : Math.PI * 1.5;
 		// TODO: figure out why we were resetting odoAngleOffset 90 degrees off
-		odometer.resetPosition(new Rotation2d(), getModulePositions(), pose);
+		poseEstimator.resetPosition(new Rotation2d(), getModulePositions(), pose);
 	}
 
 	public SwerveModulePosition[] getModulePositions() {

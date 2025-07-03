@@ -297,7 +297,6 @@ public class DrivePod extends SubsystemBase {
 	}
 
 	public SwerveModuleState optimizePodHeading(SwerveModuleState state) {
-		
 		state = new SwerveModuleState(state.speedMetersPerSecond, Rotation2d.fromRotations(state.angle.getRotations() % 1));
 		if (state.angle.getRotations() < -0.5) {
 			state = new SwerveModuleState(state.speedMetersPerSecond, state.angle.plus(Rotation2d.fromRotations(1)));

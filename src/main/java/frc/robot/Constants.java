@@ -6,6 +6,21 @@ package frc.robot;
 
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+
+import static edu.wpi.first.units.Units.Amps;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.FeetPerSecond;
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.KilogramSquareMeters;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
+import static edu.wpi.first.units.Units.Millimeter;
+import static edu.wpi.first.units.Units.Pounds;
+import static edu.wpi.first.units.Units.RadiansPerSecond;
+import static edu.wpi.first.units.Units.Rotations;
+import static edu.wpi.first.units.Units.RotationsPerSecond;
+import static edu.wpi.first.units.Units.Volts;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -82,6 +97,27 @@ public final class Constants {
 		public static final double robotMaxLinearSpeed = 3.99; // meters per second
 		public static final double robotMaxRotationalSpeed = 3.0; // meters per second
 		public static final double motorMaxOutput = 1.0; // max output of the motors
+
+        public static final PIDConstants TRANSLATION_PID = new PIDConstants(5, 0, 0);
+        public static final PIDConstants ROTATION_PID = new PIDConstants(5, 0, 0);
+
+		// completely bs configs, taken directly from LIGHTING 862'S PREMIER ROBOT NAUTILUS FROM THE YEAR OF OUR LORD TWENTY TWENTY FIVE
+		private static final double TRACK_WIDTH = Units.inchesToMeters(27);
+        private static final Mass ROBOT_MASS = Pounds.of(147);
+        private static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(5.2268411);
+        
+		private static final ModuleConfig MODULE_CONFIG = new ModuleConfig(
+                Inches.of(2), MetersPerSecond.of(2), 
+                1.916, DCMotor.getKrakenX60Foc(1).withReduction(6.75),
+                Amps.of(120), 1);
+
+
+
+        public static final RobotConfig CONFIG = new RobotConfig(ROBOT_MASS, ROBOT_MOI, MODULE_CONFIG,
+                new Translation2d[] { new Translation2d(TRACK_WIDTH / 2, TRACK_WIDTH / 2),
+                        new Translation2d(TRACK_WIDTH / 2, -TRACK_WIDTH / 2),
+                        new Translation2d(-TRACK_WIDTH / 2, TRACK_WIDTH / 2),
+                        new Translation2d(-TRACK_WIDTH / 2, -TRACK_WIDTH / 2) });
 	}
 
 	public final class JoystickConstants {
