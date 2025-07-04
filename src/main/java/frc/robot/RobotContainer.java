@@ -26,10 +26,11 @@ import frc.robot.commands.DriveCommand;
 import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.SpinManually;
 import frc.robot.subsystems.DiffySwerve;
+import frc.robot.subsystems.TurdSwerve;
 
 public class RobotContainer {
 	private final CommandXboxController joystick = new CommandXboxController(JoystickConstants.driverPort);
-	private final DiffySwerve swerve = new DiffySwerve();
+	private final TurdSwerve swerve = new TurdSwerve();
 	private final SendableChooser<Command> autoChooser;
 
 	public RobotContainer() {
