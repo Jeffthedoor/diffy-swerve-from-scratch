@@ -42,6 +42,8 @@ public class PhotonVision extends SubsystemBase {
     private StructPublisher<Pose3d> posePublisher;
     private DoublePublisher distPublisher;
 
+    public Pose3d pose = new Pose3d();
+
     // private Swerve drivetrain;
 
     private CameraThread camThread;
@@ -194,6 +196,7 @@ public class PhotonVision extends SubsystemBase {
         // drivetrain.addVisionMeasurement(updates.k, updates.v);
 
         posePublisher.accept(updates.k.estimatedPose);
+        pose = updates.k.estimatedPose;
     }
 
 

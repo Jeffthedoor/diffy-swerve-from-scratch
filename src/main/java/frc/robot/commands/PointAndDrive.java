@@ -12,10 +12,11 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.DiffySwerve;
 import frc.robot.subsystems.DrivePod;
+import frc.robot.subsystems.TurdSwerve;
 
 public class PointAndDrive extends Command {
 
-	DiffySwerve swerve;
+	TurdSwerve swerve;
 	Supplier<Translation2d> joystickRight;
 	Rotation2d angle = new Rotation2d();
 	Supplier<Double> speed;
@@ -25,7 +26,7 @@ public class PointAndDrive extends Command {
 	 * @param joystickRight the direction to point in
 	 * @param speed the speed to drive at, 0-1
 	 */
-	public PointAndDrive(DiffySwerve swerve, Supplier<Translation2d> joystickRight, Supplier<Double> speed) {
+	public PointAndDrive(TurdSwerve swerve, Supplier<Translation2d> joystickRight, Supplier<Double> speed) {
 		this.swerve = swerve;
 		this.joystickRight = joystickRight;
 		this.speed = speed;

@@ -9,13 +9,14 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.JoystickConstants;
 import frc.robot.Constants.RobotConstants;
 import frc.robot.subsystems.DiffySwerve;
+import frc.robot.subsystems.TurdSwerve;
 
 public class DriveCommand extends Command {
 
-	private DiffySwerve swerve;
+	private TurdSwerve swerve;
 	private Supplier<Translation2d> joystickRight, joystickLeft;
 
-	public DriveCommand(DiffySwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight) {
+	public DriveCommand(TurdSwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight) {
 		this.swerve = swerve;
 		this.joystickRight = joystickRight;
 		this.joystickLeft = joystickLeft;

@@ -7,10 +7,12 @@ package frc.robot.commands;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.TurdConstants;
 import frc.robot.subsystems.DiffySwerve;
+import frc.robot.subsystems.TurdSwerve;
 
 public class SpinManually extends Command {
-    private DiffySwerve swerve;
+    private TurdSwerve swerve;
     private Supplier<Integer> pod;
     private Supplier<Double> command;
     
@@ -20,7 +22,7 @@ public class SpinManually extends Command {
      * @param pod a supplier that returns the pod index to control, or -1 to stop
      * @param command a supplier that returns the rotational speed to set the pod to
     */
-    public SpinManually(DiffySwerve swerve, Supplier<Integer> pod, Supplier<Double> command) {
+    public SpinManually(TurdSwerve swerve, Supplier<Integer> pod, Supplier<Double> command) {
         this.swerve = swerve;
         this.pod = pod;
         this.command = command;

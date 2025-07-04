@@ -21,13 +21,14 @@ import frc.robot.commands.DriveCommand;
 import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.SpinManually;
 import frc.robot.subsystems.DiffySwerve;
+import frc.robot.subsystems.TurdSwerve;
 import frc.robot.subsystems.InputGetter;
 import frc.robot.subsystems.InputSender;
 import frc.robot.subsystems.PhotonVision;
 
 public class RobotContainer {
 	public static final CommandXboxController joystick = new CommandXboxController(JoystickConstants.driverPort);
-	public static final DiffySwerve swerve = new DiffySwerve();
+	public static final TurdSwerve swerve = new TurdSwerve(0);
     private InputGetter inputGetter;
     private PhotonVision photonVision;
 

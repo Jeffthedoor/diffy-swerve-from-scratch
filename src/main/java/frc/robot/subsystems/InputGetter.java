@@ -41,8 +41,6 @@ public class InputGetter extends SubsystemBase {
 
                 lastEnableStatus = inputs.isEnabled;
             }
-
-            System.out.println(dsSim.isEnabled);
         }
 
         //debugging/testing
