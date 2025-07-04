@@ -4,6 +4,9 @@
 
 package frc.robot;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 
@@ -19,7 +22,12 @@ import frc.robot.Constants.RobotMap.PodConfig;
 public final class Constants {
 	public static final boolean tuningMode = true; // if true, the robot will use the dashboard to get values for PIDs
 
-	/** CAN ID, Invert, Pod Positions, Offsets, Conversion Rates */
+    //grab the master/slave from a file on the robot. This will determine whether it's running the shuffleboard server.
+    public static final Path MASTER_PATH = Paths.get("/home/lvuser/master");
+    public static final boolean IS_MASTER = MASTER_PATH.toFile().exists();
+
+	/*
+	* CAN ID, Invert, Pod Positions, Offsets, Conversion Rates */
 	public final class RobotMap {
 		public static final double podRotationUpperBound = 210.0/360.0*0.5;
 		public static final double podRotationLowerBound = -210.0/360.0*0.5;

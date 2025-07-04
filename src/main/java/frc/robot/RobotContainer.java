@@ -21,12 +21,24 @@ import frc.robot.commands.DriveCommand;
 import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.SpinManually;
 import frc.robot.subsystems.DiffySwerve;
+import frc.robot.subsystems.InputGetter;
+import frc.robot.subsystems.InputSender;
+import frc.robot.subsystems.PhotonVision;
 
 public class RobotContainer {
 	public static final CommandXboxController joystick = new CommandXboxController(JoystickConstants.driverPort);
 	public static final DiffySwerve swerve = new DiffySwerve();
+    private InputGetter inputGetter;
+    private PhotonVision photonVision;
 
 	public RobotContainer() {
+        inputGetter = new InputGetter();
+        if(Constants.IS_MASTER) {
+            new InputSender();
+            new PhotonVision();
+        }
+
+
 		//manually spin individual pods based on dpad input + right joystick input
 		joystick.pov(-1).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> joystick.getRightX()));
 

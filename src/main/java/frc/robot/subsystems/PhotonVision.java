@@ -5,7 +5,6 @@
 package frc.robot.subsystems;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -16,24 +15,18 @@ import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
 import org.photonvision.simulation.VisionTargetSim;
 import org.photonvision.targeting.PhotonPipelineResult;
-import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DataLogManager;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Robot;
 import frc.robot.Constants.RobotMap.CameraName;
-import frc.robot.util.Triplet;
 import frc.robot.util.Tuple;
 
 public class PhotonVision extends SubsystemBase {
@@ -46,12 +39,15 @@ public class PhotonVision extends SubsystemBase {
     private SimCameraProperties cameraProp;
     private VisionTargetSim visionTarget;
 
-    private DiffySwerve drivetrain;
+    private StructPublisher<Pose3d> posePublisher;
+    private DoublePublisher distPublisher;
+
+    // private Swerve drivetrain;
 
     private CameraThread camThread;
 
-    public PhotonVision(DiffySwerve drivetrain) {
-        this.drivetrain = drivetrain;
+    public PhotonVision() {
+        // this.drivetrain = drivetrain;
 
         AprilTagFieldLayout tagLayout = null;
 
@@ -66,6 +62,9 @@ public class PhotonVision extends SubsystemBase {
 
 
         camThread.start();
+
+        posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getStructTopic("pose", Pose3d.struct).publish();
+        distPublisher = NetworkTableInstance.getDefault().getTable("Vision").getDoubleTopic("distance").publish();
 
         //TODO: implement simulation
         // if (!Robot.isReal()) {
@@ -192,7 +191,9 @@ public class PhotonVision extends SubsystemBase {
     private synchronized void updateVision() {
         Tuple<EstimatedRobotPose, Double> updates = camThread.getUpdates();
 
-        drivetrain.addVisionMeasurement(updates.k, updates.v);
+        // drivetrain.addVisionMeasurement(updates.k, updates.v);
+
+        posePublisher.accept(updates.k.estimatedPose);
     }
 
 
