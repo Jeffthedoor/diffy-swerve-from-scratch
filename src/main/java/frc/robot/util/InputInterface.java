@@ -45,7 +45,7 @@ public class InputInterface {
 		inputs = new Inputs(controller, isenabled, timeStamp);
 
 		sticksPublisher.set(new double[] {
-				inputs.leftX, inputs.leftY, inputs.rightX, inputs.rightY
+				inputs.leftX, inputs.leftY, inputs.rightX, inputs.rightY, inputs.leftTrigger, inputs.rightTrigger, inputs.pov
 		});
 		buttonsPublisher.set(new boolean[] {
 				inputs.aButton, inputs.bButton, inputs.xButton, inputs.yButton,
@@ -72,7 +72,7 @@ public class InputInterface {
 	}
 
 	private static void subscribeInputs() {
-		sticksSubscriber = table.getDoubleArrayTopic("sticks").subscribe(new double[] { 0, 0, 0, 0 });
+		sticksSubscriber = table.getDoubleArrayTopic("sticks").subscribe(new double[] { 0, 0, 0, 0, 0, 0, 0 });
 		buttonsSubscriber = table.getBooleanArrayTopic("buttons")
 				.subscribe(new boolean[] { false, false, false, false, false, false, false, false });
 		isEnabledSubscriber = table.getBooleanTopic("isEnabled").subscribe(false);
@@ -92,6 +92,9 @@ public class InputInterface {
 		public double leftY;
 		public double rightX;
 		public double rightY;
+		public double leftTrigger;
+		public double rightTrigger;
+		public int pov;
 		public boolean aButton;
 		public boolean bButton;
 		public boolean xButton;
@@ -104,12 +107,18 @@ public class InputInterface {
 		public double timeStamp;
 
 		public Inputs(XboxController controller, boolean isenabled, double timeStamp) {
+			//double values
 			this.isEnabled = isenabled;
 			this.timeStamp = timeStamp;
 			this.leftX = controller.getLeftX();
 			this.leftY = controller.getLeftY();
 			this.rightX = controller.getRightX();
 			this.rightY = controller.getRightY();
+			this.leftTrigger = controller.getLeftTriggerAxis();
+			this.rightTrigger = controller.getRightTriggerAxis();
+			this.pov = controller.getPOV();
+			
+			//boolean values
 			this.aButton = controller.getAButton();
 			this.bButton = controller.getBButton();
 			this.xButton = controller.getXButton();
@@ -122,11 +131,16 @@ public class InputInterface {
 
 		public Inputs(double[] sticks, boolean[] buttons,
 				boolean isEnabled, double timeStamp) {
+			//double values
 			this.leftX = sticks[0];
 			this.leftY = sticks[1];
 			this.rightX = sticks[2];
 			this.rightY = sticks[3];
+			this.leftTrigger = sticks[4];
+			this.rightTrigger = sticks[5];
+			this.pov = (int) sticks[6];
 
+			//boolean values
 			this.aButton = buttons[0];
 			this.bButton = buttons[1];
 			this.xButton = buttons[2];

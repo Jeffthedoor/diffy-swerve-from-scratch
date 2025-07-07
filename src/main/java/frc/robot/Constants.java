@@ -50,7 +50,7 @@ public final class Constants {
 
 		// Camera IDs. this is for individual camera-threads, but there's only one so its fine
 		public static enum CameraName {
-			front
+			master, slave
 		}
 
 		public static final class PodConfig {

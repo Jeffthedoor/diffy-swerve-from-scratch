@@ -48,7 +48,7 @@ public class PhotonVision extends SubsystemBase {
 
     private CameraThread camThread;
 
-    public PhotonVision() {
+    public PhotonVision(CameraName camName) {
         // this.drivetrain = drivetrain;
 
         AprilTagFieldLayout tagLayout = null;
@@ -56,14 +56,16 @@ public class PhotonVision extends SubsystemBase {
         try {
             // Attempt to load the AprilTag field layout from the specified JSON file
             tagLayout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().toPath().resolve("tags.json"));
-            camThread = new CameraThread(CameraName.front, new Transform3d(), tagLayout);
+            camThread = new CameraThread(camName, new Transform3d(), tagLayout);
+            camThread.start();
+
         } catch (Exception e) {
             // If the file is not found or there's an error, print a message
-            throw new RuntimeException("Failed to load AprilTag field layout", e);
+            System.out.println("Failed to load AprilTag field layout");
+            return;
         }
 
 
-        camThread.start();
 
         posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getStructTopic("pose", Pose3d.struct).publish();
         distPublisher = NetworkTableInstance.getDefault().getTable("Vision").getDoubleTopic("distance").publish();
@@ -120,71 +122,71 @@ public class PhotonVision extends SubsystemBase {
          */
     }
 
-    /**
-     * check if the camera has a target using networktables
-     * @param camera - the camera to check
-     * @return boolean - if the camera has a target
-     */
-    public boolean hasTarget(CameraName camera) {
-        if(isCameraInitialized(camera)) {
-            switch(camera) {
-                case front:
-                    return camThread.getCameraObject().getCameraTable().getEntry("hasTarget").getBoolean(false);
-                default:
-                    return false;
-            }
-        } else {
-            return false;
-        }
-    }
+    // /**
+    //  * check if the camera has a target using networktables
+    //  * @param camera - the camera to check
+    //  * @return boolean - if the camera has a target
+    //  */
+    // public boolean hasTarget(CameraName camera) {
+    //     if(isCameraInitialized(camera)) {
+    //         switch(camera) {
+    //             case front:
+    //                 return camThread.getCameraObject().getCameraTable().getEntry("hasTarget").getBoolean(false);
+    //             default:
+    //                 return false;
+    //         }
+    //     } else {
+    //         return false;
+    //     }
+    // }
 
-     /**
-     * check if the vision has a target using networktables
-     * @return boolean - if the camera has a target
-     */
-    public boolean hasTarget() {
-        return hasTarget(CameraName.front);
-    }
+    //  /**
+    //  * check if the vision has a target using networktables
+    //  * @return boolean - if the camera has a target
+    //  */
+    // public boolean hasTarget() {
+    //     return hasTarget(CameraName.front);
+    // }
 
-    /**
-     * get the target's Y position in pixels
-     * @param camera - the camera to check
-     * @param offset - the offset to add to the value
-     * @return double - the target's Y position in pixels
-     */
-    public double getTY(CameraName camera, double offset) {
-        if(isCameraInitialized(camera)) {
-            switch(camera) {
-                case front:
-                    return camThread.getCameraObject().getCameraTable().getEntry("targetPixelsY").getDouble(0) + offset;
+    // /**
+    //  * get the target's Y position in pixels
+    //  * @param camera - the camera to check
+    //  * @param offset - the offset to add to the value
+    //  * @return double - the target's Y position in pixels
+    //  */
+    // public double getTY(CameraName camera, double offset) {
+    //     if(isCameraInitialized(camera)) {
+    //         switch(camera) {
+    //             case front:
+    //                 return camThread.getCameraObject().getCameraTable().getEntry("targetPixelsY").getDouble(0) + offset;
 
-                default:
-                    return 0;
-            }
-        } else {
-            return 0;
-        }
-    }
+    //             default:
+    //                 return 0;
+    //         }
+    //     } else {
+    //         return 0;
+    //     }
+    // }
 
-    /**
-     * get the target's X position in pixels
-     * @param camera - the camera to check
-     * @param offset - the offset to add to the value
-     * @return double - the target's X position in pixels
-     */
-    public double getTX(CameraName camera, double offset) {
-        if(isCameraInitialized(camera)) {
-            switch(camera) {
-                case front:
-                    return camThread.getCameraObject().getCameraTable().getEntry("targetPixelsX").getDouble(0) + offset;
+    // /**
+    //  * get the target's X position in pixels
+    //  * @param camera - the camera to check
+    //  * @param offset - the offset to add to the value
+    //  * @return double - the target's X position in pixels
+    //  */
+    // public double getTX(CameraName camera, double offset) {
+    //     if(isCameraInitialized(camera)) {
+    //         switch(camera) {
+    //             case front:
+    //                 return camThread.getCameraObject().getCameraTable().getEntry("targetPixelsX").getDouble(0) + offset;
 
-                default:
-                    return 0;
-            }
-        } else {
-            return 0;
-        }
-    }
+    //             default:
+    //                 return 0;
+    //         }
+    //     } else {
+    //         return 0;
+    //     }
+    // }
 
     private boolean isCameraInitialized(CameraName camName) {
         return camThread.cameraInitialized;

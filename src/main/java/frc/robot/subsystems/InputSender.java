@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.JoystickConstants;
 import frc.robot.util.InputInterface;
 
 public class InputSender extends SubsystemBase {
@@ -15,7 +16,7 @@ public class InputSender extends SubsystemBase {
 	private XboxController controller;
 
 	public InputSender() {
-		controller = new XboxController(0);
+		controller = new XboxController(JoystickConstants.driverPort);		
 	}
 
 	@Override

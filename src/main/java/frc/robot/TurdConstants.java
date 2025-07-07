@@ -65,16 +65,16 @@ public class TurdConstants {
 		}
 		public static final SingleRobotConfig[] robotConfigs = new SingleRobotConfig[] { 
 		new SingleRobotConfig(new PodConfig[] { // prowl
-			new PodConfig(16, 15, 23, 0.3865d, new Translation2d(wheelBase / 2, trackWidth / 2)),
-			new PodConfig(14, 13, 22, -0.3328d, new Translation2d(wheelBase / 2, -trackWidth / 2)),
-			new PodConfig(18, 17, 24, -0.3132d, new Translation2d(-wheelBase / 2, trackWidth / 2)),
-			new PodConfig(12, 11, 21, 0.4138d, new Translation2d(-wheelBase / 2, -trackWidth / 2))
+			new PodConfig(16, 15, 23, -0.3865d, new Translation2d(wheelBase / 2, trackWidth / 2)),
+			new PodConfig(14, 13, 22, 0.3328d, new Translation2d(wheelBase / 2, -trackWidth / 2)),
+			new PodConfig(18, 17, 24, 0.3132d, new Translation2d(-wheelBase / 2, trackWidth / 2)),
+			new PodConfig(12, 11, 21, -0.4138d, new Translation2d(-wheelBase / 2, -trackWidth / 2))
 		}),
 		new SingleRobotConfig(new PodConfig[] { // megatron
-			new PodConfig(2, 6, 23, -0.2827d, new Translation2d(wheelBase / 2, trackWidth / 2)),
-			new PodConfig(3, 7, 22, 0.1538d, new Translation2d(wheelBase / 2, -trackWidth / 2)),
-			new PodConfig(4, 8, 24, -0.3127d, new Translation2d(-wheelBase / 2, trackWidth / 2)),
-			new PodConfig(5, 9, 21, 0.4138d, new Translation2d(-wheelBase / 2, -trackWidth / 2))
+			new PodConfig(16, 15, 23, 0.4844, new Translation2d(wheelBase / 2, trackWidth / 2)),
+			new PodConfig(14, 13, 22, 0.4797, new Translation2d(wheelBase / 2, -trackWidth / 2)),
+			new PodConfig(18, 17, 24, -0.1980, new Translation2d(-wheelBase / 2, trackWidth / 2)),
+			new PodConfig(12, 11, 21, -0.4006, new Translation2d(-wheelBase / 2, -trackWidth / 2))
 		})};
 
 

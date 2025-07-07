@@ -19,6 +19,8 @@ public class InputGetter extends SubsystemBase {
     private boolean lastEnableStatus = false;
 
     public InputGetter() {
+    	inputs = InputInterface.grabInputs();
+
         if(!Constants.IS_MASTER) {
             dsSim = new DSSim();
             dsSim.init();
@@ -46,40 +48,49 @@ public class InputGetter extends SubsystemBase {
         //debugging/testing
 	}
 
-    public DoubleSupplier getLeftX() {
-        return () -> inputs.leftX;
+    public double getLeftX() {
+        return inputs.leftX;
     }
-    public DoubleSupplier getLeftY() {
-        return () -> inputs.leftY;
+    public double getLeftY() {
+        return inputs.leftY;
     }
-    public DoubleSupplier getRightX() {
-        return () -> inputs.rightX;
+    public double getRightX() {
+        return inputs.rightX;
     }
-    public DoubleSupplier getRightY() {
-        return () -> inputs.rightY;
+    public double getRightY() {
+        return inputs.rightY;
     }
-    public BooleanSupplier getAButton() {
-        return () -> inputs.aButton;
+    public double getLeftTriggerAxis() {
+        return inputs.leftTrigger;
     }
-    public BooleanSupplier getBButton() {
-        return () -> inputs.bButton;
+    public double getRightTriggerAxis() {
+        return inputs.rightTrigger;
     }
-    public BooleanSupplier getXButton() {
-        return () -> inputs.xButton;
+    public int getPOV() {
+        return inputs.pov;
     }
-    public BooleanSupplier getYButton() {
-        return () -> inputs.yButton;
+    public boolean getAButton() {
+        return inputs.aButton;
     }
-    public BooleanSupplier getLeftBumper() {
-        return () -> inputs.leftBumper;
+    public boolean getBButton() {
+        return inputs.bButton;
     }
-    public BooleanSupplier getRightBumper() {
-        return () -> inputs.rightBumper;
+    public boolean getXButton() {
+        return inputs.xButton;
     }
-    public BooleanSupplier getStartButton() {
-        return () -> inputs.startButton;
+    public boolean getYButton() {
+        return inputs.yButton;
     }
-    public BooleanSupplier getBackButton() {
-        return () -> inputs.backButton;
+    public boolean getLeftBumper() {
+        return inputs.leftBumper;
+    }
+    public boolean getRightBumper() {
+        return inputs.rightBumper;
+    }
+    public boolean getStartButton() {
+        return inputs.startButton;
+    }
+    public boolean getBackButton() {
+        return inputs.backButton;
     }
 }

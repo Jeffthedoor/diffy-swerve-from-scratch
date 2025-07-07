@@ -16,7 +16,9 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.JoystickConstants;
+import frc.robot.Constants.RobotMap.CameraName;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.SpinManually;
@@ -27,8 +29,7 @@ import frc.robot.subsystems.InputSender;
 import frc.robot.subsystems.PhotonVision;
 
 public class RobotContainer {
-	public static final CommandXboxController joystick = new CommandXboxController(JoystickConstants.driverPort);
-	public static final TurdSwerve swerve = new TurdSwerve(0);
+	public final TurdSwerve swerve;
     private InputGetter inputGetter;
     private PhotonVision photonVision;
 
@@ -36,24 +37,29 @@ public class RobotContainer {
         inputGetter = new InputGetter();
         if(Constants.IS_MASTER) {
             new InputSender();
-            new PhotonVision();
-        }
+			swerve = new TurdSwerve(0);
+			photonVision = new PhotonVision(CameraName.master);
+        } else {
+			swerve = new TurdSwerve(1);
+			photonVision = new PhotonVision(CameraName.slave);
+		}
+
 
 
 		//manually spin individual pods based on dpad input + right joystick input
-		joystick.pov(-1).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> joystick.getRightX()));
+		new Trigger(() -> (inputGetter.getPOV() == -1)).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> inputGetter.getRightX()));
 
 		//point all pods at an angle based on right joystick input
-		joystick.leftTrigger().whileTrue(new PointAndDrive(swerve, () -> new Translation2d(joystick.getRightX(), joystick.getRightY()), () -> joystick.getRightTriggerAxis()));
+		new Trigger(inputGetter::getLeftBumper).whileTrue(new PointAndDrive(swerve, () -> new Translation2d(inputGetter.getRightX(), inputGetter.getRightY()), () -> inputGetter.getRightTriggerAxis()));
 
-		joystick.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
+		new Trigger(inputGetter::getStartButton).whileTrue(new InstantCommand(swerve::resetPods, swerve));
 
 
 		//drive bindings
-		Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(joystick.getRightX(),
-				joystick.getRightY());
-		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(joystick.getLeftX(),
-				joystick.getLeftY());
+		Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(inputGetter.getRightX(),
+				inputGetter.getRightY());
+		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(inputGetter.getLeftX(),
+				inputGetter.getLeftY());
 		swerve.setDefaultCommand(
 				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
@@ -63,7 +69,7 @@ public class RobotContainer {
 	}
 	
 	private int getPodToTest() {
-		switch (joystick.getHID().getPOV()) {
+		switch (inputGetter.getPOV()) {
 			case 0:
 				return 0; //FL
 			case 90:
