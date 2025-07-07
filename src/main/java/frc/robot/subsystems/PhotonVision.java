@@ -139,55 +139,7 @@ public class PhotonVision extends SubsystemBase {
     //         return false;
     //     }
     // }
-
-    //  /**
-    //  * check if the vision has a target using networktables
-    //  * @return boolean - if the camera has a target
-    //  */
-    // public boolean hasTarget() {
-    //     return hasTarget(CameraName.front);
-    // }
-
-    // /**
-    //  * get the target's Y position in pixels
-    //  * @param camera - the camera to check
-    //  * @param offset - the offset to add to the value
-    //  * @return double - the target's Y position in pixels
-    //  */
-    // public double getTY(CameraName camera, double offset) {
-    //     if(isCameraInitialized(camera)) {
-    //         switch(camera) {
-    //             case front:
-    //                 return camThread.getCameraObject().getCameraTable().getEntry("targetPixelsY").getDouble(0) + offset;
-
-    //             default:
-    //                 return 0;
-    //         }
-    //     } else {
-    //         return 0;
-    //     }
-    // }
-
-    // /**
-    //  * get the target's X position in pixels
-    //  * @param camera - the camera to check
-    //  * @param offset - the offset to add to the value
-    //  * @return double - the target's X position in pixels
-    //  */
-    // public double getTX(CameraName camera, double offset) {
-    //     if(isCameraInitialized(camera)) {
-    //         switch(camera) {
-    //             case front:
-    //                 return camThread.getCameraObject().getCameraTable().getEntry("targetPixelsX").getDouble(0) + offset;
-
-    //             default:
-    //                 return 0;
-    //         }
-    //     } else {
-    //         return 0;
-    //     }
-    // }
-
+    
     private boolean isCameraInitialized(CameraName camName) {
         return camThread.cameraInitialized;
     }

@@ -22,6 +22,7 @@ import frc.robot.Constants.RobotMap.CameraName;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.SpinManually;
+import frc.robot.commands.TandemDrive;
 import frc.robot.subsystems.DiffySwerve;
 import frc.robot.subsystems.TurdSwerve;
 import frc.robot.subsystems.InputGetter;
@@ -60,8 +61,10 @@ public class RobotContainer {
 				inputGetter.getRightY());
 		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(inputGetter.getLeftX(),
 				inputGetter.getLeftY());
-		swerve.setDefaultCommand(
-				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
+		// swerve.setDefaultCommand(
+		// 		new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
+
+		swerve.setDefaultCommand(new TandemDrive(swerve, driverLeftJoystick, driverRightJoystick));
 
 
 		// PID tuning/testing function. just sets FL pod to DPAD angle.

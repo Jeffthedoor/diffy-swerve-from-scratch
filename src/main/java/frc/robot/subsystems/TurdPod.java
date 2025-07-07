@@ -242,9 +242,9 @@ public class TurdPod extends SubsystemBase {
     public void setPodState(SwerveModuleState state, boolean isTurningEnabled) {
         state.optimize(Rotation2d.fromRotations(getAngle())); // does not account for rotations between 180 and 360?
         azimuthMotor.setControl(anglePID.withPosition(state.angle.getRotations())); 
-        speed = state.speedMetersPerSecond / 20;
+        speed = state.speedMetersPerSecond;
 
-        driveMotor.set(speed); //should this be in setPodState?
+        driveMotor.set(speed); 
     }
 
     @Override
