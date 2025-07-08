@@ -22,6 +22,12 @@ public final class Constants {
     //grab the master/slave from a file on the robot. This will determine whether it's running the shuffleboard server.
     public static final Path MASTER_PATH = Paths.get("/home/lvuser/master");
     public static final boolean IS_MASTER = MASTER_PATH.toFile().exists();
+	//TODO: phase out if statements and replace them with switches w/ this enum
+	public static enum RobotType {
+		master, slave
+	} 
+
+	public static RobotType currentRobot = IS_MASTER ? RobotType.master : RobotType.slave;
 
 	/*
 	* CAN ID, Invert, Pod Positions, Offsets, Conversion Rates */

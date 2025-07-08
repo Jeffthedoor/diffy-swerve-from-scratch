@@ -16,6 +16,7 @@ import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructEntry;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.TurdConstants;
 import frc.robot.TurdConstants.RobotConfig;
@@ -55,11 +56,11 @@ public class TandemDrive extends Command {
         // kI.accept(0);
         // kD.accept(0);
 
-        targetPosePublisher = NetworkTableInstance.getDefault().getTable("TandemDrive").getStructTopic("targetPose", Pose2d.struct).getEntry(new Pose2d());
+        targetPosePublisher = NetworkTableInstance.getDefault().getTable(Constants.currentRobot.toString()).getStructTopic("targetPose", Pose2d.struct).getEntry(new Pose2d());
 
         //reset the initial pose to the robot-system pose
         Pose2d robotTargetPose = targetPose.plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
-        swerve.resetPose(targetPose);
+        swerve.resetPose(robotTargetPose);
     }
 
     @Override

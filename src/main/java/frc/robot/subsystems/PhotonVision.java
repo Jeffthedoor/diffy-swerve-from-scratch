@@ -17,6 +17,7 @@ import org.photonvision.simulation.VisionTargetSim;
 import org.photonvision.targeting.PhotonPipelineResult;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.networktables.BooleanPublisher;
@@ -26,6 +27,8 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.Constants.RobotType;
 import frc.robot.Constants.RobotMap.CameraName;
 import frc.robot.util.Tuple;
 
@@ -66,9 +69,11 @@ public class PhotonVision extends SubsystemBase {
         }
 
 
+        //telemetry
+        String tab = Constants.currentRobot.toString();
 
-        posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getStructTopic("pose", Pose3d.struct).publish();
-        distPublisher = NetworkTableInstance.getDefault().getTable("Vision").getDoubleTopic("distance").publish();
+        posePublisher = NetworkTableInstance.getDefault().getTable(tab).getSubTable("Vision").getStructTopic("pose", Pose3d.struct).publish();
+        distPublisher = NetworkTableInstance.getDefault().getTable(tab).getSubTable("Vision").getDoubleTopic("distance").publish();
 
         //TODO: implement simulation
         // if (!Robot.isReal()) {
