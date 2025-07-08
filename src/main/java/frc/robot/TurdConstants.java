@@ -13,7 +13,7 @@ import edu.wpi.first.math.util.Units;
 public class TurdConstants {
 	public static boolean tuningMode = false;
 	public class RobotConfig {
-		public static final double driveMetersPerMotorRotation = Units.inchesToMeters(2) * Math.PI / 1 / 0.36; //Wheel Diameter M * PI / Enc Count Per Rev / Gear Ratio
+		public static final double driveMetersPerMotorRotation = 1/(Units.inchesToMeters(2) * Math.PI / 1.36); //Wheel Diameter M * PI / Enc Count Per Rev / Gear Ratio
 
         public static final int pigeonID = 25;
         public static final PIDController gyroPID = new PIDController(0.046, 0d, 0.001);
@@ -47,9 +47,9 @@ public class TurdConstants {
 			public static final double kD = 0.2;
 		}
 
-		private static final double wheelBase = 1.0;
-		private static final double trackWidth = 1.0;
-		public static final Translation2d offsetPosition = new Translation2d(0.0, Constants.IS_MASTER ? 3.37 : -3.37); // center of rotation of robot
+		private static final double wheelBase = Units.inchesToMeters(11.054);
+		private static final double trackWidth = Units.inchesToMeters(11.054);
+		public static final Translation2d offsetPosition = new Translation2d(0.0, Constants.IS_MASTER ? 1 : -1); // center of rotation of robot
 
 		public static final class SingleRobotConfig {
 			public PodConfig[] PodConfigs;

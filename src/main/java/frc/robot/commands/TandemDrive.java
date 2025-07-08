@@ -59,7 +59,7 @@ public class TandemDrive extends Command {
 
         //reset the initial pose to the robot-system pose
         Pose2d robotTargetPose = targetPose.plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
-        swerve.resetPose(targetPose);
+        swerve.resetPose(robotTargetPose);
     }
 
     @Override

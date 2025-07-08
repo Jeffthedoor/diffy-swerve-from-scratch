@@ -23,6 +23,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.motorcontrol.Talon;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.TurdConstants;
 /** This is a sample pod that uses a CANcoder and TalonFXes. */
 public class TurdPod extends SubsystemBase {
     public CANcoder absoluteEncoder;
@@ -49,7 +50,7 @@ public class TurdPod extends SubsystemBase {
     public TurdPod(int absoluteEncoderID, int azimuthID, int driveID, double absoluteEncoderOffset, boolean azimuthInvert, int azimuthLimit, double azimuthRotationsPerRot, boolean azimuthBrake, double azimuthRR, double kP, double kI, double kD, double FF, double maxOut, double ADMult, boolean driveInvert, int driveLimit, boolean driveBrake, double driveRR) {
         absoluteEncoder = makeCANCoder(absoluteEncoderID, false, absoluteEncoderOffset);
         
-        driveMotor = makeDrive(driveID, driveInvert, driveBrake, driveLimit, driveRR, 1d, 1d);
+        driveMotor = makeDrive(driveID, driveInvert, driveBrake, driveLimit, driveRR, TurdConstants.RobotConfig.driveMetersPerMotorRotation, 1d);
         azimuthMotor = makeAzimuth(azimuthID, absoluteEncoderID, azimuthInvert, azimuthBrake, azimuthLimit, azimuthRR, 1d, azimuthRotationsPerRot);
         
 
