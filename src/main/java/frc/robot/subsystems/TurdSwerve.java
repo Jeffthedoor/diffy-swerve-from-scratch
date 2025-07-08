@@ -38,6 +38,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.TurdConstants.RobotConfig;
 import frc.robot.TurdConstants.RobotConfig.SingleRobotConfig;
+import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.TurdConstants;
 
@@ -98,17 +99,19 @@ public class TurdSwerve extends SubsystemBase {
 		//TODO: make pigeon config if necessary
 
 		// initialize telemetry publishers
-		SMSPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("ModuleStates", SwerveModuleState.struct)
+		String tab = Constants.currentRobot.toString();
+
+		SMSPublisher = NetworkTableInstance.getDefault().getTable(tab).getStructArrayTopic("ModuleStates", SwerveModuleState.struct)
 				.publish();
-		PosePublisher = NetworkTableInstance.getDefault().getStructTopic("RobotPose", Pose2d.struct).publish();
-		ChassisSpeedsPublisher = NetworkTableInstance.getDefault().getStructTopic("ChassisSpeeds", ChassisSpeeds.struct)
+		PosePublisher = NetworkTableInstance.getDefault().getTable(tab).getStructTopic("RobotPose", Pose2d.struct).publish();
+		ChassisSpeedsPublisher = NetworkTableInstance.getDefault().getTable(tab).getStructTopic("ChassisSpeeds", ChassisSpeeds.struct)
 				.publish();
 
 		// initialize PID subscribers
 		if(TurdConstants.tuningMode) {
-			azimuthkPSub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kP").getEntry(RobotConfig.PodConfig.kP);
-			azimuthkISub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kI").getEntry(RobotConfig.PodConfig.kI);
-			azimuthkDSub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kD").getEntry(RobotConfig.PodConfig.kD);
+			azimuthkPSub = NetworkTableInstance.getDefault().getTable(tab).getSubTable("PIDs").getDoubleTopic("kP").getEntry(RobotConfig.PodConfig.kP);
+			azimuthkISub = NetworkTableInstance.getDefault().getTable(tab).getSubTable("PIDs").getDoubleTopic("kI").getEntry(RobotConfig.PodConfig.kI);
+			azimuthkDSub = NetworkTableInstance.getDefault().getTable(tab).getSubTable("PIDs").getDoubleTopic("kD").getEntry(RobotConfig.PodConfig.kD);
 
 			azimuthkPSub.set(RobotConfig.PodConfig.kP);
 			azimuthkISub.set(RobotConfig.PodConfig.kI);
