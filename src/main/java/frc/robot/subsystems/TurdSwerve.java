@@ -216,14 +216,6 @@ public class TurdSwerve extends SubsystemBase {
 	 * @param enableIsTurning if true, the robot will not move if any pod is turning and will not start turning if any pod is still moving
 	 */
 	public void setRobotSpeeds(ChassisSpeeds chassisSpeeds, boolean enableIsTurning) {
-		// for field-relative driving
-		// chassisSpeeds =
-		// ChassisSpeeds.fromFieldRelativeSpeeds(chassisSpeeds.vxMetersPerSecond,
-		// chassisSpeeds.vyMetersPerSecond,
-		// chassisSpeeds.omegaRadiansPerSecond,
-		// getGyro());
-
-
 		SwerveModuleState[] states = drivetrainKinematics.toSwerveModuleStates(chassisSpeeds);
 		SwerveDriveKinematics.desaturateWheelSpeeds(states, RobotConfig.robotMaxSpeed);
 
@@ -265,7 +257,7 @@ public class TurdSwerve extends SubsystemBase {
 	 * @param distance   distance from the vision target to the robot, used for
 	 *                   uncertainty in the pose estimation
 	 */
-	public void setInitialGuess(Pose2d pose) {
+	public void resetPose(Pose2d pose) {
 		poseEstimator.resetPose(pose);
 	}
 }

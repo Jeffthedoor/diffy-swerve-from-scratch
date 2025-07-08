@@ -54,7 +54,7 @@ public class FindInitialOffset extends Command {
     @Override
     public void end(boolean interrupted) {
         Pose3d finalPose = new Pose3d(poseMatrix.div(i));
-        swerve.setInitialGuess(finalPose.toPose2d());
+        swerve.resetPose(finalPose.toPose2d());
         finalPublisher.accept(finalPose);
     }
 
