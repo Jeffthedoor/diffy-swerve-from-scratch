@@ -64,13 +64,13 @@ public class TurdConstants {
 			}
 		}
 		public static final SingleRobotConfig[] robotConfigs = new SingleRobotConfig[] { 
-		new SingleRobotConfig(new PodConfig[] { // prowl
+		new SingleRobotConfig(new PodConfig[] { // prowl AKA master AKA og megatron
 			new PodConfig(16, 15, 23, -0.8865d, new Translation2d(wheelBase / 2, trackWidth / 2)),
 			new PodConfig(14, 13, 22, 0.3328d, new Translation2d(wheelBase / 2, -trackWidth / 2)),
 			new PodConfig(18, 17, 24, 0.8132d, new Translation2d(-wheelBase / 2, trackWidth / 2)),
-			new PodConfig(12, 11, 21, -0.4138d, new Translation2d(-wheelBase / 2, -trackWidth / 2))
+			new PodConfig(12, 11, 21, -0.4138d + (1d/33d), new Translation2d(-wheelBase / 2, -trackWidth / 2))
 		}),
-		new SingleRobotConfig(new PodConfig[] { // megatron
+		new SingleRobotConfig(new PodConfig[] { // NemesisPrime AKA slave AKA Kris's NERDSwerve
 			new PodConfig(16, 15, 23, 0.9844, new Translation2d(wheelBase / 2, trackWidth / 2)),
 			new PodConfig(14, 13, 22, 0.4797, new Translation2d(wheelBase / 2, -trackWidth / 2)),
 			new PodConfig(18, 17, 24, -0.6980, new Translation2d(-wheelBase / 2, trackWidth / 2)),
