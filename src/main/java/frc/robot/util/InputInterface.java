@@ -66,7 +66,7 @@ public class InputInterface {
 		NetworkTableInstance.getDefault().stopServer(); // Close the server if this is a slave robot
 		NetworkTableInstance.getDefault().startClient4("slave"); // TODO: if multiple slaves are implemented, this has
 																	// to be keyed
-		NetworkTableInstance.getDefault().setServerTeam(9312); // Replace with your team number
+		NetworkTableInstance.getDefault().setServer("roboRIO-9312-FRC-MASTER.local"); // Replace with your team number
 
 		subscribeInputs();
 	}

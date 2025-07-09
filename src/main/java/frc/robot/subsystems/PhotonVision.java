@@ -4,6 +4,10 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Degrees;
+
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import org.photonvision.EstimatedRobotPose;
@@ -19,17 +23,25 @@ import org.photonvision.targeting.PhotonPipelineResult;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.networktables.StructSubscriber;
+import edu.wpi.first.networktables.TimestampedObject;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.Constants.RobotConstants;
 import frc.robot.Constants.RobotType;
 import frc.robot.Constants.RobotMap.CameraName;
+import frc.robot.util.Triplet;
 import frc.robot.util.Tuple;
 
 public class PhotonVision extends SubsystemBase {
@@ -42,38 +54,43 @@ public class PhotonVision extends SubsystemBase {
     private SimCameraProperties cameraProp;
     private VisionTargetSim visionTarget;
 
-    private StructPublisher<Pose3d> posePublisher;
+    List<TimestampedObject<Pose2d>> timestampedMasterPoses = new ArrayList<>();
+
+    private StructPublisher<Pose2d> posePublisher;
     private DoublePublisher distPublisher;
+    private StructSubscriber<Pose2d> masterPoseSubscriber;
 
-    public Pose3d pose = new Pose3d();
+    private HashMap<Double, Pose2d> masterPoses = new HashMap<>();
 
-    // private Swerve drivetrain;
+    public Pose2d pose = new Pose2d();
+
+    private TurdSwerve drivetrain;
 
     private CameraThread camThread;
 
-    public PhotonVision(CameraName camName) {
-        // this.drivetrain = drivetrain;
+    public PhotonVision(TurdSwerve drivetrain, CameraName camName) {
+        this.drivetrain = drivetrain;
 
-        AprilTagFieldLayout tagLayout = null;
-
-        try {
+        // try {
             // Attempt to load the AprilTag field layout from the specified JSON file
-            tagLayout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().toPath().resolve("tags.json"));
-            camThread = new CameraThread(camName, new Transform3d(), tagLayout);
+            // tagLayout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().toPath().resolve("tags.json"));
+            camThread = new CameraThread(camName, RobotConstants.SLAVE_CAMERA_LOCATION);
             camThread.start();
 
-        } catch (Exception e) {
-            // If the file is not found or there's an error, print a message
-            System.out.println("Failed to load AprilTag field layout");
-            return;
-        }
+        // } catch (Exception e) {
+        //     // If the file is not found or there's an error, print a message
+        //     System.out.println("Failed to load AprilTag field layout");
+        //     return;
+        // }
 
 
         //telemetry
         String tab = Constants.currentRobot.toString();
 
-        posePublisher = NetworkTableInstance.getDefault().getTable(tab).getSubTable("Vision").getStructTopic("pose", Pose3d.struct).publish();
-        distPublisher = NetworkTableInstance.getDefault().getTable(tab).getSubTable("Vision").getDoubleTopic("distance").publish();
+        distPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getDoubleTopic("distance").publish();
+        masterPoseSubscriber = NetworkTableInstance.getDefault().getTable(Constants.RobotType.master.toString()).getStructTopic("RobotPose", Pose2d.struct).subscribe(new Pose2d());
+        posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getStructTopic("full pose", Pose2d.struct).publish();
+
 
         //TODO: implement simulation
         // if (!Robot.isReal()) {
@@ -150,52 +167,78 @@ public class PhotonVision extends SubsystemBase {
     }
 
     private synchronized void updateVision() {
-        Tuple<EstimatedRobotPose, Double> updates = camThread.getUpdates();
+        Tuple<Transform2d, Double> updates = camThread.getUpdates();
+        timestampedMasterPoses.addAll(List.of(masterPoseSubscriber.readQueue()));
 
-        // drivetrain.addVisionMeasurement(updates.k, updates.v);
+        //trim timestampedMasterPoses to 10 values (for efficiency)
+        if (timestampedMasterPoses.size() > 10) {
+            timestampedMasterPoses = timestampedMasterPoses.subList(timestampedMasterPoses.size() - 10, timestampedMasterPoses.size());
+        }
 
-        posePublisher.accept(updates.k.estimatedPose);
-        pose = updates.k.estimatedPose;
+        //find the master pose with the closest timestamp to the camera's timestamp
+        //NT timestamps are measured in microseconds, PV timestamps are seconds.
+        double visionTimeStampMicroSeconds = updates.v * 1000000d;
+        Pose2d closestMasterPose = timestampedMasterPoses.stream()
+            .min((a, b) -> Double.compare(Math.abs(a.serverTime - visionTimeStampMicroSeconds), Math.abs(b.serverTime - visionTimeStampMicroSeconds)))
+            .map(pose -> pose.value)
+            .orElse(null);
+        
+        //add the distance from the center of the master robot to the tag
+        closestMasterPose = new Pose2d(closestMasterPose.getTranslation(), closestMasterPose.getRotation().plus(new Rotation2d(Degrees.of(-90))));
+        Pose2d fieldRelativePose = closestMasterPose.rotateBy(new Rotation2d(Degrees.of(-90))).plus(updates.k).plus(new Transform2d(0d, -0.2102, new Rotation2d()));
+
+
+        // add the master pose to the translation to get field-relative pose. 
+        // grab the timestamp
+        // grab the distance to the best tag
+        drivetrain.addVisionMeasurement(fieldRelativePose, updates.v, updates.k.getTranslation().getNorm());
+
+        posePublisher.accept(fieldRelativePose);
+        pose = fieldRelativePose;
+
+        distPublisher.accept(masterPoseSubscriber.getAtomic().serverTime / 1000000d);
+
     }
 
 
     private class CameraThread extends Thread {
-        private EstimatedRobotPose pose = new EstimatedRobotPose(new Pose3d(), 0, List.of(), PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
-        private PhotonPoseEstimator poseEstimator;
+        // private EstimatedRobotPose pose = new EstimatedRobotPose(new Pose3d(), 0, List.of(), PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
+        // private PhotonPoseEstimator poseEstimator;
         private PhotonCamera camera;
+        private final Transform3d cameraPosition;
         private Double averageDistance = 0d;
         private CameraName camName;
-        private Tuple<EstimatedRobotPose, Double> updates;
+        private Tuple<Transform2d, Double> updates;
         private boolean hasTarget = false;
-        private AprilTagFieldLayout tags;
 
         private final BooleanPublisher hasTargetPublisher;
         private final DoublePublisher targetsFoundPublisher;
         private final DoublePublisher timestampPublisher;
-        private final DoublePublisher distancePublisher;
+        // private final DoublePublisher distancePublisher;
         private final StructPublisher<Pose3d> posePublisher;
 
         public boolean cameraInitialized = false;
 
-        CameraThread(CameraName camName, Transform3d cameraPosition, AprilTagFieldLayout tagLayout) {
+        CameraThread(CameraName camName, Transform3d cameraPosition) {
             this.camName = camName;
+            this.cameraPosition = cameraPosition;
 
             initializeCamera();
 
-            poseEstimator = new PhotonPoseEstimator(tagLayout,
-                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, cameraPosition);
-            poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
+            // poseEstimator = new PhotonPoseEstimator(tagLayout,
+            //     PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, cameraPosition);
+            // poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
 
-            tags = poseEstimator.getFieldTags();
+            // tags = poseEstimator.getFieldTags();
 
-            poseEstimator.setFieldTags(tags);
+            // poseEstimator.setFieldTags(tags);
 
             // Initialize NetworkTables publishers
             hasTargetPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getBooleanTopic("hasTarget").publish();
             targetsFoundPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("targetsFound").publish();
             timestampPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("timestamp").publish();
-            distancePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("distance").publish();
-            posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getStructTopic("pose", Pose3d.struct).publish();
+            // distancePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("distance").publish();
+            posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getStructTopic("cam pose", Pose3d.struct).publish();
         }
 
         @Override
@@ -213,6 +256,9 @@ public class PhotonVision extends SubsystemBase {
                     initializeCamera();
                 } else {
                     try {
+                        Transform3d robotToTag = new Transform3d();
+                        double timestamp = 0;
+
                         // main call to grab a set of results from the camera
                         List<PhotonPipelineResult> results = camera.getAllUnreadResults();
 
@@ -229,9 +275,13 @@ public class PhotonVision extends SubsystemBase {
 
                                 // grabs the best target from the result and sends to pose estimator, iFF the pose ambiguity is below a (hardcoded) threshold
                                 if (!(result.getBestTarget().getPoseAmbiguity() > 0.5)) {
-                                    poseEstimator.update(result).ifPresentOrElse(((pose) -> this.pose = pose), () -> {
-                                        DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose not updated");
-                                    });
+                                    // poseEstimator.update(result).ifPresentOrElse(((pose) -> this.pose = pose), () -> {
+                                    //     DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose not updated");
+                                    // });
+
+                                    robotToTag = result.getBestTarget().getBestCameraToTarget().plus(cameraPosition);
+                                    // robotToTag = new Transform3d(robotToTag.getTranslation().plus(cameraPosition.getTranslation()), robotToTag.getRotation().plus(cameraPosition.getRotation()));
+                                    timestamp = result.getTimestampSeconds();
                                 } else {
                                     DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose ambiguity is high");
                                 }
@@ -242,8 +292,8 @@ public class PhotonVision extends SubsystemBase {
                                 hasTargetPublisher.set(true);
                                 targetsFoundPublisher.set(numberOfResults);
                                 timestampPublisher.set(result.getTimestampSeconds());
-                                distancePublisher.set(totalDistances / numberOfResults);
-                                posePublisher.set(pose.estimatedPose);
+                                // distancePublisher.set(totalDistances / numberOfResults);
+                                posePublisher.set(Pose3d.kZero.plus(robotToTag));
                             } else {
                                 hasTargetPublisher.set(false);
                                 targetsFoundPublisher.set(0);
@@ -252,7 +302,7 @@ public class PhotonVision extends SubsystemBase {
 
                         // averages distance over all results
                         averageDistance = totalDistances / numberOfResults;
-                        updates = new Tuple<EstimatedRobotPose, Double>(pose, averageDistance);
+                        updates = new Tuple<Transform2d, Double>(new Transform2d(robotToTag.getTranslation().toTranslation2d(), robotToTag.getRotation().toRotation2d()), timestamp);
                         this.hasTarget = hasTarget;
                         if (hasTarget) {
                             updateVision();
@@ -280,7 +330,7 @@ public class PhotonVision extends SubsystemBase {
          *
          * @return Tuple<EstimatedRobotPose, Double> - the most recent pose and average distance to the best target
          */
-        public Tuple<EstimatedRobotPose, Double> getUpdates() {
+        public Tuple<Transform2d, Double> getUpdates() {
             return updates;
         }
 
@@ -319,6 +369,7 @@ public class PhotonVision extends SubsystemBase {
      * @param caller - the camera that called the function, used to determine which camera's pose to use
      * @deprecated
      */
+    @Deprecated
     private synchronized void updateVision(CameraName caller) {
         // Tuple<EstimatedRobotPose, Double> leftUpdates = camThread.getUpdates();
         // Tuple<EstimatedRobotPose, Double> rightUpdates = rightThread.getUpdates();

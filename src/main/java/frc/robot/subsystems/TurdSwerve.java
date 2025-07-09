@@ -245,11 +245,23 @@ public class TurdSwerve extends SubsystemBase {
 	 * @param distance   distance from the vision target to the robot, used for
 	 *                   uncertainty in the pose estimation
 	 */
-	public void addVisionMeasurement(EstimatedRobotPose visionPose, double distance) {
-		poseEstimator.addVisionMeasurement(visionPose.estimatedPose.toPose2d(),
-				Utils.fpgaToCurrentTime(visionPose.timestampSeconds),
+
+	public void addVisionMeasurement(Pose2d visionPose, double timestamp, double distance) {
+		poseEstimator.addVisionMeasurement(visionPose,
+				Utils.fpgaToCurrentTime(timestamp),
 				// just a hardcoded /2 for now, this can be tuned further. This just decreases pose certainty as distance increases.
-				VecBuilder.fill(distance / 2, distance / 2, distance / 2));
+				VecBuilder.fill(distance / 4, distance / 4, distance / 3));
+
+		if(DriverStation.isDisabled()) {
+			resetPose(visionPose);
+		}
+
+		// poseEstimator.addVisionMeasurement(visionPose,
+		// 		Utils.fpgaToCurrentTime(timestamp),
+		// 		// just a hardcoded /2 for now, this can be tuned further. This just decreases pose certainty as distance increases.
+		// 		VecBuilder.fill(0.01, 0.01, 0.01));
+
+		
 	}
 
 	

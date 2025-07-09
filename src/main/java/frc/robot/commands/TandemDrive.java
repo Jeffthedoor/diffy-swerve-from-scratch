@@ -58,9 +58,11 @@ public class TandemDrive extends Command {
 
         targetPosePublisher = NetworkTableInstance.getDefault().getTable(Constants.currentRobot.toString()).getStructTopic("targetPose", Pose2d.struct).getEntry(new Pose2d());
 
-        //reset the initial pose to the robot-system pose
-        Pose2d robotTargetPose = targetPose.plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
-        swerve.resetPose(robotTargetPose);
+        if(Constants.IS_MASTER) {
+            //reset the initial pose to the robot-system pose
+            Pose2d robotTargetPose = targetPose.plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
+            swerve.resetPose(robotTargetPose);
+        }
     }
 
     @Override

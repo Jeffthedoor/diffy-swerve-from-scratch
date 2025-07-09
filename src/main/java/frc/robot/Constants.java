@@ -4,11 +4,16 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Degrees;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
@@ -93,6 +98,9 @@ public final class Constants {
 		public static final double robotMaxLinearSpeed = 3.99; // meters per second
 		public static final double robotMaxRotationalSpeed = 3.0; // meters per second
 		public static final double motorMaxOutput = 1.0; // max output of the motors
+
+		//forward, left, height; roll, pitch, yaw
+		public static final Transform3d SLAVE_CAMERA_LOCATION = new Transform3d(new Translation3d(-0.152, -0.1996, 0.1350), new Rotation3d(Degrees.of(180), Degrees.of(0), Degrees.of(105)));
 	}
 
 	public final class JoystickConstants {
