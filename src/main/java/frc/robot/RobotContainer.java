@@ -39,10 +39,10 @@ public class RobotContainer {
         if(Constants.IS_MASTER) {
             new InputSender();
 			swerve = new TurdSwerve(0);
-			photonVision = new PhotonVision(CameraName.master);
+			// photonVision = new PhotonVision(swerve, CameraName.master);
         } else {
 			swerve = new TurdSwerve(1);
-			photonVision = new PhotonVision(CameraName.slave);
+			photonVision = new PhotonVision(swerve, CameraName.slave);
 		}
 
 
@@ -64,7 +64,7 @@ public class RobotContainer {
 		// swerve.setDefaultCommand(
 		// 		new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
-		swerve.setDefaultCommand(new TandemDrive(swerve, driverLeftJoystick, driverRightJoystick));
+		swerve.setDefaultCommand(new TandemDrive(swerve, driverLeftJoystick, driverRightJoystick).ignoringDisable(true));
 
 
 		// PID tuning/testing function. just sets FL pod to DPAD angle.
