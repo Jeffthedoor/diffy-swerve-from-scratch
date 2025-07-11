@@ -24,9 +24,9 @@ import frc.robot.subsystems.TurdSwerve;
 
 public class TandemDrive extends Command {
     private final TurdSwerve swerve;
-    private final PIDController anglePID = new PIDController(0.1, 0, 0);
-    private final PIDController xPID = new PIDController(0.12, 0, 0);
-    private final PIDController yPID = new PIDController(0.12, 0, 0);
+    private final PIDController anglePID = new PIDController(0.2, 0, 0);
+    private final PIDController xPID = new PIDController(0.3, 0, 0);
+    private final PIDController yPID = new PIDController(0.3, 0, 0);
 	private Supplier<Translation2d> joystickRight, joystickLeft;
 
     private Pose2d targetPose = new Pose2d();
@@ -34,6 +34,9 @@ public class TandemDrive extends Command {
     private DoubleEntry kP;
     private DoubleEntry kI;
     private DoubleEntry kD;
+    private DoubleEntry kP_angle;
+    private DoubleEntry kI_angle;
+    private DoubleEntry kD_angle;
     private StructEntry<Pose2d> targetPosePublisher;
 
     public TandemDrive(TurdSwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight) {
@@ -48,13 +51,14 @@ public class TandemDrive extends Command {
     public void initialize() {
         anglePID.enableContinuousInput(0, Math.PI * 2);
 
-        // kP = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kP").getEntry(0.0);
-        // kI = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kI").getEntry(0.0);
-        // kD = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kD").getEntry(0.0);
+        kP = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kP").getEntry(0.0);
+        kI = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kI").getEntry(0.0);
+        kD = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kD").getEntry(0.0);
 
-        // kP.accept(0);
-        // kI.accept(0);
-        // kD.accept(0);
+        kP_angle = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kP_angle").getEntry(0.0);
+        kI_angle = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kI_angle").getEntry(0.0);
+        kD_angle = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kD_angle").getEntry(0.0);
+
 
         targetPosePublisher = NetworkTableInstance.getDefault().getTable(Constants.currentRobot.toString()).getStructTopic("targetPose", Pose2d.struct).getEntry(new Pose2d());
 
@@ -62,13 +66,21 @@ public class TandemDrive extends Command {
             //reset the initial pose to the robot-system pose
             Pose2d robotTargetPose = targetPose.plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
             swerve.resetPose(robotTargetPose);
+
+            // kP.accept(0);
+            // kI.accept(0);
+            // kD.accept(0);
+
+            // kP_angle.accept(0);
+            // kI_angle.accept(0);
+            // kD_angle.accept(0);
         }
     }
 
     @Override
     public void execute() {
         Transform2d transform = new Transform2d(
-            new Translation2d(-joystickRight.get().getY(), -joystickRight.get().getX()), new Rotation2d(-joystickLeft.get().getX())
+            new Translation2d(-joystickRight.get().getY(), -joystickRight.get().getX()), new Rotation2d(-joystickLeft.get().getX() * 0.6)
         ).times(Robot.kDefaultPeriod).times(RobotConfig.robotMaxSpeed);
 
         targetPose = targetPose.plus(transform);
@@ -82,7 +94,7 @@ public class TandemDrive extends Command {
 
         swerve.setRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(xOut, yOut, rOut, currentPose.getRotation()));
 
-        // anglePID.setPID(kP.get(), kI.get(), kD.get());
+        // anglePID.setPID(kP_angle.get(), kI_angle.get(), kD_angle.get());
         // xPID.setPID(kP.get(), kI.get(), kD.get());
         // yPID.setPID(kP.get(), kI.get(), kD.get());
 

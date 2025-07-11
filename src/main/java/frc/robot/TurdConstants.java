@@ -49,7 +49,7 @@ public class TurdConstants {
 
 		private static final double wheelBase = Units.inchesToMeters(11.054);
 		private static final double trackWidth = Units.inchesToMeters(11.054);
-		public static final Translation2d offsetPosition = new Translation2d(0.0, Constants.IS_MASTER ? 1 : -1); // center of rotation of robot
+		public static final Translation2d offsetPosition = new Translation2d(0.0, Constants.IS_MASTER ? 0.75 : -0.75); // center of rotation of robot
 
 		public static final class SingleRobotConfig {
 			public PodConfig[] PodConfigs;

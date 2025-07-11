@@ -247,19 +247,17 @@ public class TurdSwerve extends SubsystemBase {
 	 */
 
 	public void addVisionMeasurement(Pose2d visionPose, double timestamp, double distance) {
-		poseEstimator.addVisionMeasurement(visionPose,
-				Utils.fpgaToCurrentTime(timestamp),
-				// just a hardcoded /2 for now, this can be tuned further. This just decreases pose certainty as distance increases.
-				VecBuilder.fill(distance / 4, distance / 4, distance / 3));
-
 		if(DriverStation.isDisabled()) {
-			resetPose(visionPose);
+			poseEstimator.addVisionMeasurement(visionPose,
+					Utils.fpgaToCurrentTime(timestamp),
+					VecBuilder.fill(0.01, 0.01, 0.01));
+		} else {
+			poseEstimator.addVisionMeasurement(visionPose,
+					Utils.fpgaToCurrentTime(timestamp),
+					// just a hardcoded /4 for now, this can be tuned further. This just decreases pose certainty as distance increases.
+					VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 		}
 
-		// poseEstimator.addVisionMeasurement(visionPose,
-		// 		Utils.fpgaToCurrentTime(timestamp),
-		// 		// just a hardcoded /2 for now, this can be tuned further. This just decreases pose certainty as distance increases.
-		// 		VecBuilder.fill(0.01, 0.01, 0.01));
 
 		
 	}

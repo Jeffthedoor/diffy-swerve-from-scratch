@@ -26,6 +26,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
@@ -84,13 +85,14 @@ public class PhotonVision extends SubsystemBase {
         // }
 
 
-        //telemetry
-        String tab = Constants.currentRobot.toString();
+        if(!Constants.IS_MASTER) {
+            //telemetry
+            String tab = Constants.currentRobot.toString();
 
-        distPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getDoubleTopic("distance").publish();
-        masterPoseSubscriber = NetworkTableInstance.getDefault().getTable(Constants.RobotType.master.toString()).getStructTopic("RobotPose", Pose2d.struct).subscribe(new Pose2d());
-        posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getStructTopic("full pose", Pose2d.struct).publish();
-
+            distPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getDoubleTopic("distance").publish();
+            masterPoseSubscriber = NetworkTableInstance.getDefault().getTable(Constants.RobotType.master.toString()).getStructTopic("RobotPose", Pose2d.struct).subscribe(new Pose2d());
+            posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getStructTopic("full pose", Pose2d.struct).publish();
+        }
 
         //TODO: implement simulation
         // if (!Robot.isReal()) {
@@ -184,8 +186,19 @@ public class PhotonVision extends SubsystemBase {
             .orElse(null);
         
         //add the distance from the center of the master robot to the tag
-        closestMasterPose = new Pose2d(closestMasterPose.getTranslation(), closestMasterPose.getRotation().plus(new Rotation2d(Degrees.of(-90))));
-        Pose2d fieldRelativePose = closestMasterPose.rotateBy(new Rotation2d(Degrees.of(-90))).plus(updates.k).plus(new Transform2d(0d, -0.2102, new Rotation2d()));
+        // closestMasterPose = new Pose2d(closestMasterPose.getTranslation().plus(new Translation2d(0d, -0.2102)), closestMasterPose.getRotation().plus(new Rotation2d(Degrees.of(180))));
+        // Pose2d fieldRelativePose = closestMasterPose.plus(new Transform2d(new Translation2d(updates.k.getX(), -updates.k.getY()).rotateBy(updates.k.getRotation()), updates.k.getRotation()));
+        // fieldRelativePose = new Pose2d(fieldRelativePose.getX(), fieldRelativePose.getY(), fieldRelativePose.getRotation().plus(Rotation2d.kCW_90deg));
+
+
+        // closestMasterPose = new Pose2d(closestMasterPose.getTranslation().plus(new Translation2d(0d, -0.2102)), closestMasterPose.getRotation().plus(new Rotation2d(Degrees.of(180))));
+        // updates.k.plus(new Transform2d(0d, -0.2102, new Rotation2d(Degrees.of(-90))));
+        // Pose2d fieldRelativePose = closestMasterPose.plus(visionTranslation);
+        
+        Transform2d visionTranslation = new Transform2d(new Translation2d(-updates.k.getY(), -(updates.k.getX() + 0.2102)).rotateBy(drivetrain.getPose().getRotation()), updates.k.getRotation().minus(new Rotation2d(Degrees.of(90))));
+        Pose2d fieldRelativePose = new Pose2d(closestMasterPose.getTranslation().plus(visionTranslation.getTranslation()),
+        visionTranslation.getRotation().plus(closestMasterPose.getRotation()));
+        // fieldRelativePose = new Pose2d(fieldRelativePose.getX(), fieldRelativePose.getY(), fieldRelativePose.getRotation().plus(Rotation2d.kCW_90deg));
 
 
         // add the master pose to the translation to get field-relative pose. 
@@ -211,11 +224,11 @@ public class PhotonVision extends SubsystemBase {
         private Tuple<Transform2d, Double> updates;
         private boolean hasTarget = false;
 
-        private final BooleanPublisher hasTargetPublisher;
-        private final DoublePublisher targetsFoundPublisher;
-        private final DoublePublisher timestampPublisher;
+        private  BooleanPublisher hasTargetPublisher;
+        private  DoublePublisher targetsFoundPublisher;
+        private  DoublePublisher timestampPublisher;
         // private final DoublePublisher distancePublisher;
-        private final StructPublisher<Pose3d> posePublisher;
+        private  StructPublisher<Pose3d> posePublisher;
 
         public boolean cameraInitialized = false;
 
@@ -224,6 +237,8 @@ public class PhotonVision extends SubsystemBase {
             this.cameraPosition = cameraPosition;
 
             initializeCamera();
+
+            if(Constants.IS_MASTER) return;
 
             // poseEstimator = new PhotonPoseEstimator(tagLayout,
             //     PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, cameraPosition);
@@ -243,6 +258,7 @@ public class PhotonVision extends SubsystemBase {
 
         @Override
         public void run() {
+            if(Constants.IS_MASTER) return;
             try {
                 //wait for the camera to bootup before initialization
                 sleep(3000);
