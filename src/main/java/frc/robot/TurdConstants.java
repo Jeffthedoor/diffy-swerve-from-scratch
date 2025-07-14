@@ -31,16 +31,10 @@ public class TurdConstants {
 				this.encoderOffset = encoderOffset;
 				this.position = podPosition;
 			}
-			public static final boolean encoderInvert = true;
-			public static final boolean azimuthInvert = false; 
-			public static final boolean driveInvert = true; 
 
 			public static final double motorGearing = 50;
 
 			public static final boolean motorsBrake = true;
-			public static final int ampLimit = 80;
-			public static final double maxOutput = 1;
-			public static final double rampRate = 0.2;
 
 			public static final double kP = 1;
 			public static final double kI = 0.0;
@@ -98,6 +92,8 @@ public class TurdConstants {
         public static final double azimuthDriveSpeedMultiplier = 0.5;
 
         public static final double azimuthMotorRampRate = 0.0;
+		public static final boolean encoderInvert = true;
+		public static final boolean azimuthInvert = false; 
 
         // Drive Settings
         public static final double podMaxSpeed = 1;
@@ -109,7 +105,7 @@ public class TurdConstants {
         public static final double driveMotorRampRate = 0.2;
 
         public static final double azimuthRadiansPerMotorRotation = 2.200000047683716;
-
+		public static final boolean driveInvert = true; 
 	}
     
 }

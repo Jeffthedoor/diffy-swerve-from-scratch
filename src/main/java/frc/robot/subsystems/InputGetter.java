@@ -33,9 +33,7 @@ public class InputGetter extends SubsystemBase {
     public void periodic() {
     	inputs = InputInterface.grabInputs();
 
-        //only do this logic if we aren't the master. 
         if(!Constants.IS_MASTER) {
-            // if the enable state has changed, we need to update the DSSim
             if(inputs.isEnabled != lastEnableStatus) {
                 if(inputs.isEnabled) {
                     dsSim.enable();
@@ -47,7 +45,6 @@ public class InputGetter extends SubsystemBase {
             }
         }
 
-        //debugging/testing
 	}
 
     public double getLeftX() {

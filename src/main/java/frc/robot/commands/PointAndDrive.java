@@ -36,7 +36,7 @@ public class PointAndDrive extends Command {
 	@Override
 	public void execute() {
 		if (joystickRight.get().getNorm() > 0.5) {
-			angle = joystickRight.get().getAngle().plus(Rotation2d.kCCW_90deg).times(-1); // TODO: test if this offset is correct
+			angle = joystickRight.get().getAngle().plus(Rotation2d.kCCW_90deg).times(-1); 
 		}
 		SwerveModuleState state = new SwerveModuleState(speed.get(), angle);
 

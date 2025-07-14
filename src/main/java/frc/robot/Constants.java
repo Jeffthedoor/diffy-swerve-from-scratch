@@ -99,7 +99,17 @@ public final class Constants {
 		public static final double robotMaxRotationalSpeed = 3.0; // meters per second
 		public static final double motorMaxOutput = 1.0; // max output of the motors
 
+		//PID gains for tandem drive controller
+		public static final double tandemkP = 0.3;
+		public static final double tandemkI = 0.0;
+		public static final double tandemkD = 0.0;
+
+		public static final double tandemkP_angle = 0.2;
+		public static final double tandemkI_angle = 0.0;
+		public static final double tandemkD_angle = 0.0;
+
 		//forward, left, height; roll, pitch, yaw
+		public static final Translation2d centerOfMasterToTag = new Translation2d(0, -0.2102); // meters, distance from the center of the master robot to the tag
 		public static final Transform3d SLAVE_CAMERA_LOCATION = new Transform3d(new Translation3d(-0.152, -0.1996, 0.1350), new Rotation3d(Degrees.of(180), Degrees.of(0), Degrees.of(105)));
 	}
 

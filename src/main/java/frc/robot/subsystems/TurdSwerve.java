@@ -76,10 +76,10 @@ public class TurdSwerve extends SubsystemBase {
 					// RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert,
 					// RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit,
 					// PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.kP, PodConfig.kI, PodConfig.kD, PodConfig.motorGearing));
-					new TurdPod(RobotConfig.robotConfigs[robot].PodConfigs[i].encoderID, RobotConfig.robotConfigs[robot].PodConfigs[i].azimuthID, RobotConfig.robotConfigs[robot].PodConfigs[i].driveID, RobotConfig.robotConfigs[robot].PodConfigs[i].encoderOffset, RobotConfig.robotConfigs[robot].PodConfigs[i].azimuthInvert, 
+					new TurdPod(RobotConfig.robotConfigs[robot].PodConfigs[i].encoderID, RobotConfig.robotConfigs[robot].PodConfigs[i].azimuthID, RobotConfig.robotConfigs[robot].PodConfigs[i].driveID, RobotConfig.robotConfigs[robot].PodConfigs[i].encoderOffset, RobotConfig.azimuthInvert, 
 					RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake, RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP, 
-					RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput, RobotConfig.azimuthDriveSpeedMultiplier, RobotConfig.robotConfigs[robot].PodConfigs[i].driveInvert, 
-					RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate));// TODO: find the offsets 
+					RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput, RobotConfig.azimuthDriveSpeedMultiplier, RobotConfig.driveInvert, 
+					RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate));
 		}
 
 
@@ -163,9 +163,6 @@ public class TurdSwerve extends SubsystemBase {
 	}
 
 	public void resetOdometry(Pose2d pose) {
-		// odoAngleOffset = DriverStation.getAlliance().get() == Alliance.Red ? Math.PI
-		// * 0.5 : Math.PI * 1.5;
-		// TODO: figure out why we were resetting odoAngleOffset 90 degrees off
 		poseEstimator.resetPosition(new Rotation2d(), getModulePositions(), pose);
 	}
 
@@ -249,19 +246,18 @@ public class TurdSwerve extends SubsystemBase {
 
 	public void addVisionMeasurement(Pose2d visionPose, double timestamp, double distance) {
 		if(DriverStation.isDisabled()) {
+			//fully sync pose estimator to vision on disable
 			poseEstimator.resetPose(visionPose);
 			poseEstimator.addVisionMeasurement(visionPose,
 					timestamp,
 					VecBuilder.fill(0.01, 0.01, 0.01));
 		} else {
+			//add some bias to odo on enable
 			poseEstimator.addVisionMeasurement(visionPose,
 					timestamp,
-					// just a hardcoded /4 for now, this can be tuned further. This just decreases pose certainty as distance increases.
-					VecBuilder.fill(0.02, 0.02, 0.02));
+					// just a hardcoded 0.04 for now, this can be tuned further.
+					VecBuilder.fill(0.04, 0.04, 0.04));
 		}
-
-
-		
 	}
 
 	

@@ -39,7 +39,7 @@ public class RobotContainer {
         if(Constants.IS_MASTER) {
             new InputSender();
 			swerve = new TurdSwerve(0);
-			photonVision = new PhotonVision(swerve, CameraName.master);
+			PhotonVision.initializeMasterCamera();
         } else {
 			swerve = new TurdSwerve(1);
 			photonVision = new PhotonVision(swerve, CameraName.slave);

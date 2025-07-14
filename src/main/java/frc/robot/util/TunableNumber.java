@@ -1,6 +1,6 @@
 package frc.robot.util;
 
-import edu.wpi.first.networktables.DoubleSubscriber;
+import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.Constants;
 
@@ -15,7 +15,7 @@ public class TunableNumber extends Number{
     private double defaultValue;
     private double lastHasChangedValue = defaultValue;
 
-    private DoubleSubscriber subscriber;
+    private DoubleEntry entry;
 
 
     /**
@@ -58,7 +58,8 @@ public class TunableNumber extends Number{
     private void setDefault(double defaultValue) {
         this.defaultValue = defaultValue;
         if (Constants.tuningMode) {
-            subscriber = NetworkTableInstance.getDefault().getTable(tableKey).getDoubleTopic(key).subscribe(defaultValue);
+            entry = NetworkTableInstance.getDefault().getTable(tableKey).getDoubleTopic(key).getEntry(defaultValue);
+            entry.accept(defaultValue);
         }
     }
 
@@ -68,7 +69,7 @@ public class TunableNumber extends Number{
      * @return The current value
      */
     private double get() {
-        return Constants.tuningMode ? subscriber.get()
+        return Constants.tuningMode ? entry.get()
                 : defaultValue;
     }
 

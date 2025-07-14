@@ -32,7 +32,9 @@ public class InputSender extends SubsystemBase {
 		InputInterface.updateInputs(controller, DriverStation.isEnabled(), Timer.getFPGATimestamp(), grabTandemTarget());
 	}
 
-	//this is a little silly, and it ruins the interopreability of this InputSender class but im hungry and wanna go home
+	/**
+	 * updates and returns the robot formation's target position
+	 */
 	private Pose2d grabTandemTarget() {
         return targetPose = targetPose.plus(new Transform2d(
             new Translation2d(-controller.getRightY(), -controller.getRightX()), new Rotation2d(-controller.getLeftX() * TurdConstants.RobotConfig.robotMaxRotationMult)

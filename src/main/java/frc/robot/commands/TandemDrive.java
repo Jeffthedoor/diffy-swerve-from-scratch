@@ -19,25 +19,32 @@ import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.TurdConstants;
+import frc.robot.Constants.RobotConstants;
 import frc.robot.TurdConstants.RobotConfig;
 import frc.robot.subsystems.TurdSwerve;
+import frc.robot.util.TunableNumber;
 
 public class TandemDrive extends Command {
     private final TurdSwerve swerve;
-    private final PIDController anglePID = new PIDController(0.2, 0, 0);
-    private final PIDController xPID = new PIDController(0.3, 0, 0);
-    private final PIDController yPID = new PIDController(0.3, 0, 0);
 	private Supplier<Pose2d> tandemTarget;
 
     private Pose2d targetPose = new Pose2d();
 
-    private DoubleEntry kP;
-    private DoubleEntry kI;
-    private DoubleEntry kD;
-    private DoubleEntry kP_angle;
-    private DoubleEntry kI_angle;
-    private DoubleEntry kD_angle;
     private StructEntry<Pose2d> targetPosePublisher;
+
+
+    //PID values
+    private TunableNumber kP = new TunableNumber("tandem kP", RobotConstants.tandemkP);
+    private TunableNumber kI = new TunableNumber("tandem kI", RobotConstants.tandemkI);
+    private TunableNumber kD = new TunableNumber("tandem kD", RobotConstants.tandemkD);
+    private TunableNumber kP_angle = new TunableNumber("tandem kP_angle", RobotConstants.tandemkP_angle);
+    private TunableNumber kI_angle = new TunableNumber("tandem kI_angle", RobotConstants.tandemkI_angle);
+    private TunableNumber kD_angle = new TunableNumber("tandem kD_angle", RobotConstants.tandemkD_angle);
+
+
+    private final PIDController anglePID = new PIDController(kP_angle.getDefault(), kI_angle.getDefault(), kD_angle.getDefault());
+    private final PIDController xPID = new PIDController(kP.getDefault(), kI.getDefault(), kD.getDefault());
+    private final PIDController yPID = new PIDController(kP.getDefault(), kI.getDefault(), kD.getDefault());
 
     public TandemDrive(TurdSwerve swerve, Supplier<Pose2d> tandemTarget) {
         this.swerve = swerve;
@@ -50,37 +57,24 @@ public class TandemDrive extends Command {
     public void initialize() {
         anglePID.enableContinuousInput(0, Math.PI * 2);
 
-        kP = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kP").getEntry(0.0);
-        kI = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kI").getEntry(0.0);
-        kD = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kD").getEntry(0.0);
-
-        kP_angle = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kP_angle").getEntry(0.0);
-        kI_angle = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kI_angle").getEntry(0.0);
-        kD_angle = NetworkTableInstance.getDefault().getTable("TandemDrive").getDoubleTopic("kD_angle").getEntry(0.0);
-
-
-        targetPosePublisher = NetworkTableInstance.getDefault().getTable(Constants.currentRobot.toString()).getStructTopic("targetPose", Pose2d.struct).getEntry(new Pose2d());
-
+        
         if(Constants.IS_MASTER) {
             //reset the initial pose to the robot-system pose
-            Pose2d robotTargetPose = targetPose.plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
+            // only do this if on the master robot, as slaves are synced to master automatically
+            Pose2d robotTargetPose = targetPose.plus(new Transform2d(RobotConfig.offsetPosition, Rotation2d.kZero));
             swerve.resetPose(robotTargetPose);
-
-            // kP.accept(0);
-            // kI.accept(0);
-            // kD.accept(0);
-
-            // kP_angle.accept(0);
-            // kI_angle.accept(0);
-            // kD_angle.accept(0);
         }
+
+        //initialize telemetry
+        targetPosePublisher = NetworkTableInstance.getDefault().getTable(Constants.currentRobot.toString()).getStructTopic("targetPose", Pose2d.struct).getEntry(new Pose2d());
     }
 
     @Override
     public void execute() {
-        Pose2d robotTargetPose = tandemTarget.get().plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
+        //grab the target pose calculated by the master robot, add it onto the offset position for this robot
+        Pose2d robotTargetPose = tandemTarget.get().plus(new Transform2d(RobotConfig.offsetPosition, Rotation2d.kZero));
 
-
+        //calculate the speeds to drive towards the target pose
         Pose2d currentPose = swerve.getPose();
         double xOut = xPID.calculate(currentPose.getX(), robotTargetPose.getX());
         double yOut = yPID.calculate(currentPose.getY(), robotTargetPose.getY());
@@ -88,10 +82,15 @@ public class TandemDrive extends Command {
 
         swerve.setRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(xOut, yOut, rOut, currentPose.getRotation()));
 
-        // anglePID.setPID(kP_angle.get(), kI_angle.get(), kD_angle.get());
-        // xPID.setPID(kP.get(), kI.get(), kD.get());
-        // yPID.setPID(kP.get(), kI.get(), kD.get());
+        
+        // update the PID values from the tunable numbers
+        if(Constants.tuningMode) {
+            anglePID.setPID(kP_angle.doubleValue(), kI_angle.doubleValue(), kD_angle.doubleValue());
+            xPID.setPID(kP.doubleValue(), kI.doubleValue(), kD.doubleValue());
+            yPID.setPID(kP.doubleValue(), kI.doubleValue(), kD.doubleValue());
+        }
 
+        //update telemetry
         targetPosePublisher.accept(robotTargetPose);
     }
 

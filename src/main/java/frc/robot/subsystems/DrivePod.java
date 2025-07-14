@@ -241,15 +241,6 @@ public class DrivePod extends SubsystemBase {
 			3,
 			null                         // No measurement noise.
 		);
-
-		//TODO: ensure stall torque, free current, and stall current are correct; these values are guesstimates
-		// drivetrainSim = new DifferentialDrivetrainSim(new DCMotor(16, 300, 20, 2, RotationsPerSecond.of(27).in(RadiansPerSecond), 1),
-		// 		SimConstants.gearRatio,
-		// 		SimConstants.inertia,
-		// 		SimConstants.mass, 
-		// 		SimConstants.wheelRadius,
-		// 		SimConstants.trackWidth,
-		// 		VecBuilder.fill(0.001, 0.001, 0.001, 0.1, 0.1, 0.005, 0.005));
 	}
 
 	/** resets the pod zero */
@@ -432,7 +423,6 @@ public class DrivePod extends SubsystemBase {
 		leftMotorSim.setSupplyVoltage(16);
 		rightMotorSim.setSupplyVoltage(16);
 
-		//TODO: might not have to invert the left motor voltage
 		drivetrainSim.setInputs(
 				leftMotorSim.getMotorVoltage(),
 				rightMotorSim.getMotorVoltage());

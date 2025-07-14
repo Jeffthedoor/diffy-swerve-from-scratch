@@ -58,7 +58,6 @@ public class PhotonVision extends SubsystemBase {
     List<TimestampedObject<Pose2d>> timestampedMasterPoses = new ArrayList<>();
 
     private StructPublisher<Pose2d> posePublisher;
-    private DoublePublisher distPublisher;
     private StructSubscriber<Pose2d> masterPoseSubscriber;
 
     private HashMap<Double, Pose2d> masterPoses = new HashMap<>();
@@ -72,60 +71,25 @@ public class PhotonVision extends SubsystemBase {
     public PhotonVision(TurdSwerve drivetrain, CameraName camName) {
         this.drivetrain = drivetrain;
 
-        // try {
-            // Attempt to load the AprilTag field layout from the specified JSON file
-            // tagLayout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().toPath().resolve("tags.json"));
-            camThread = new CameraThread(camName, RobotConstants.SLAVE_CAMERA_LOCATION);
-            camThread.start();
+        camThread = new CameraThread(camName, RobotConstants.SLAVE_CAMERA_LOCATION);
+        camThread.start();
 
-        // } catch (Exception e) {
-        //     // If the file is not found or there's an error, print a message
-        //     System.out.println("Failed to load AprilTag field layout");
-        //     return;
-        // }
-
-
+        //this code grabs the pose from the master robot, and thus should only run on slave(s)
         if(!Constants.IS_MASTER) {
-            //telemetry
-            String tab = Constants.currentRobot.toString();
-
-            distPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getDoubleTopic("distance").publish();
             masterPoseSubscriber = NetworkTableInstance.getDefault().getTable(Constants.RobotType.master.toString()).getStructTopic("RobotPose", Pose2d.struct).subscribe(new Pose2d());
-            posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable("slave").getStructTopic("full pose", Pose2d.struct).publish();
         }
+        
+        //initilize telemetry
+        posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(Constants.currentRobot.toString()).getStructTopic("full pose", Pose2d.struct).publish();       
+    }
 
-        //TODO: implement simulation
-        // if (!Robot.isReal()) {
-        //     visionTarget = new VisionTargetSim(VisionConstants.targetPose, VisionConstants.targetModel);
-        //     cameraProp = new SimCameraProperties();
-        //     visionSim = new VisionSystemSim("test");
-
-        //     visionSim.addVisionTargets(visionTarget);
-        //     visionSim.addAprilTags(VisionConstants.tagLayout);
-
-        //     // cameraProp.setCalibration(640, 480, Rotation2d.fromDegrees(100));
-        //     // cameraProp.setCalibError(0.25, 0.08);
-        //     // cameraProp.setFPS(20);
-        //     // cameraProp.setAvgLatencyMs(35);
-        //     // cameraProp.setLatencyStdDevMs(5);
-
-        //     leftCameraSim = new PhotonCameraSim(camThread.getCameraObject(), cameraProp);
-        //     rightCameraSim = new PhotonCameraSim(rightThread.getCameraObject(), cameraProp);
-
-        //     visionSim.addCamera(leftCameraSim, VisionConstants.robotLeftToCamera);
-        //     visionSim.addCamera(rightCameraSim, VisionConstants.robotRightToCamera);
-
-        //     // Enable the raw and processed streams. These are enabled by default.
-        //     leftCameraSim.enableRawStream(true);
-        //     leftCameraSim.enableProcessedStream(true);
-
-        //     rightCameraSim.enableRawStream(true);
-        //     rightCameraSim.enableProcessedStream(true);
-
-        //     // Enable drawing a wireframe visualization of the field to the camera streams.
-        //     // This is extremely resource-intensive and is disabled by default.
-        //     // cameraSim.enableDrawWireframe(true);
-        // }
+    /**
+     * @implNote
+     * only use for master robot, if no pose estimation is desired. does not start camera thread.
+     * This is used to initialize the camera for the master robot, so that it can run the TimeServer for the slave(s).
+     */
+    public static void initializeMasterCamera() {
+        CameraThread.initializeCamera(CameraName.master.toString());
     }
 
     /**
@@ -146,28 +110,7 @@ public class PhotonVision extends SubsystemBase {
          */
     }
 
-    // /**
-    //  * check if the camera has a target using networktables
-    //  * @param camera - the camera to check
-    //  * @return boolean - if the camera has a target
-    //  */
-    // public boolean hasTarget(CameraName camera) {
-    //     if(isCameraInitialized(camera)) {
-    //         switch(camera) {
-    //             case front:
-    //                 return camThread.getCameraObject().getCameraTable().getEntry("hasTarget").getBoolean(false);
-    //             default:
-    //                 return false;
-    //         }
-    //     } else {
-    //         return false;
-    //     }
-    // }
     
-    private boolean isCameraInitialized(CameraName camName) {
-        return camThread.cameraInitialized;
-    }
-
     private synchronized void updateVision() {
         Tuple<Transform2d, Double> updates = camThread.getUpdates();
         timestampedMasterPoses.addAll(List.of(masterPoseSubscriber.readQueue()));
@@ -178,24 +121,16 @@ public class PhotonVision extends SubsystemBase {
         }
 
         //find the master pose with the closest timestamp to the camera's timestamp
-        //NT timestamps are measured in microseconds, PV timestamps are seconds.
+        //NT timestamps are measured in microseconds, PhotonVision timestamps are seconds. Mulitiply by one million to convert/
         double visionTimeStampMicroSeconds = updates.v * 1000000d;
         Pose2d closestMasterPose = timestampedMasterPoses.stream()
             .min((a, b) -> Double.compare(Math.abs(a.serverTime - visionTimeStampMicroSeconds), Math.abs(b.serverTime - visionTimeStampMicroSeconds)))
             .map(pose -> pose.value)
             .orElse(null);
         
-        //add the distance from the center of the master robot to the tag
-        // closestMasterPose = new Pose2d(closestMasterPose.getTranslation().plus(new Translation2d(0d, -0.2102)), closestMasterPose.getRotation().plus(new Rotation2d(Degrees.of(180))));
-        // Pose2d fieldRelativePose = closestMasterPose.plus(new Transform2d(new Translation2d(updates.k.getX(), -updates.k.getY()).rotateBy(updates.k.getRotation()), updates.k.getRotation()));
-        // fieldRelativePose = new Pose2d(fieldRelativePose.getX(), fieldRelativePose.getY(), fieldRelativePose.getRotation().plus(Rotation2d.kCW_90deg));
-
-
-        // closestMasterPose = new Pose2d(closestMasterPose.getTranslation().plus(new Translation2d(0d, -0.2102)), closestMasterPose.getRotation().plus(new Rotation2d(Degrees.of(180))));
-        // updates.k.plus(new Transform2d(0d, -0.2102, new Rotation2d(Degrees.of(-90))));
-        // Pose2d fieldRelativePose = closestMasterPose.plus(visionTranslation);
         
-        Transform2d visionTranslation = new Transform2d(new Translation2d(-updates.k.getY(), -(updates.k.getX() + 0.2102)).rotateBy(drivetrain.getPose().getRotation()), updates.k.getRotation().minus(new Rotation2d(Degrees.of(90))));
+        //account for tag-to-robot and camera-to-robot offsets and then combine vision measurement with master odometry positio
+        Transform2d visionTranslation = new Transform2d(new Translation2d(-updates.k.getY(), -(updates.k.getX())).plus(RobotConstants.centerOfMasterToTag).rotateBy(drivetrain.getPose().getRotation()), updates.k.getRotation().minus(new Rotation2d(Degrees.of(90))));
         Pose2d fieldRelativePose = new Pose2d(closestMasterPose.getTranslation().plus(visionTranslation.getTranslation()),
         visionTranslation.getRotation().plus(closestMasterPose.getRotation()));
         // fieldRelativePose = new Pose2d(fieldRelativePose.getX(), fieldRelativePose.getY(), fieldRelativePose.getRotation().plus(Rotation2d.kCW_90deg));
@@ -208,8 +143,6 @@ public class PhotonVision extends SubsystemBase {
 
         posePublisher.accept(fieldRelativePose);
         pose = fieldRelativePose;
-
-        distPublisher.accept(masterPoseSubscriber.getAtomic().serverTime / 1000000d);
 
     }
 
@@ -238,21 +171,10 @@ public class PhotonVision extends SubsystemBase {
 
             initializeCamera();
 
-            if(Constants.IS_MASTER) return;
-
-            // poseEstimator = new PhotonPoseEstimator(tagLayout,
-            //     PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR, cameraPosition);
-            // poseEstimator.setMultiTagFallbackStrategy(PoseStrategy.LOWEST_AMBIGUITY);
-
-            // tags = poseEstimator.getFieldTags();
-
-            // poseEstimator.setFieldTags(tags);
-
-            // Initialize NetworkTables publishers
+            // Initialize camera-specific telemetry
             hasTargetPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getBooleanTopic("hasTarget").publish();
             targetsFoundPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("targetsFound").publish();
             timestampPublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("timestamp").publish();
-            // distancePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getDoubleTopic("distance").publish();
             posePublisher = NetworkTableInstance.getDefault().getTable("Vision").getSubTable(camName.toString()).getStructTopic("cam pose", Pose3d.struct).publish();
         }
 
@@ -291,12 +213,8 @@ public class PhotonVision extends SubsystemBase {
 
                                 // grabs the best target from the result and sends to pose estimator, iFF the pose ambiguity is below a (hardcoded) threshold
                                 if (!(result.getBestTarget().getPoseAmbiguity() > 0.5)) {
-                                    // poseEstimator.update(result).ifPresentOrElse(((pose) -> this.pose = pose), () -> {
-                                    //     DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose not updated");
-                                    // });
-
+                                    //grabs the target pose, relative to the camera, and compensates for the camera position
                                     robotToTag = result.getBestTarget().getBestCameraToTarget().plus(cameraPosition);
-                                    // robotToTag = new Transform3d(robotToTag.getTranslation().plus(cameraPosition.getTranslation()), robotToTag.getRotation().plus(cameraPosition.getRotation()));
                                     timestamp = result.getTimestampSeconds();
                                 } else {
                                     DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose ambiguity is high");
@@ -308,7 +226,6 @@ public class PhotonVision extends SubsystemBase {
                                 hasTargetPublisher.set(true);
                                 targetsFoundPublisher.set(numberOfResults);
                                 timestampPublisher.set(result.getTimestampSeconds());
-                                // distancePublisher.set(totalDistances / numberOfResults);
                                 posePublisher.set(Pose3d.kZero.plus(robotToTag));
                             } else {
                                 hasTargetPublisher.set(false);
@@ -321,18 +238,17 @@ public class PhotonVision extends SubsystemBase {
                         updates = new Tuple<Transform2d, Double>(new Transform2d(robotToTag.getTranslation().toTranslation2d(), robotToTag.getRotation().toRotation2d()), timestamp);
                         this.hasTarget = hasTarget;
                         if (hasTarget) {
+                            //primary call to the synchronized method that sends vision updates to the drivetrain
                             updateVision();
                         }
                     } catch (IndexOutOfBoundsException e) {
                         // if there are no results,
-                        // LightningShuffleboard.setBool("Vision", camName.toString() + " functional", false);
-                        // LightningShuffleboard.setBool("Vision", camName.toString() + " hasTarget", false);
                         this.hasTarget = false;
                     }
                     try {
                         sleep(5);
                     } catch (InterruptedException e) {
-                        DataLogManager.log(camName.toString() + " sleep failed");
+                        DataLogManager.log(camName.toString() + " sleep failed"); //this will never happen
                     }
                 }
             }
@@ -364,55 +280,55 @@ public class PhotonVision extends SubsystemBase {
             return hasTarget;
         }
 
-        public PhotonCamera getCameraObject() {
+        private PhotonCamera getCameraObject() {
             return camera;
         }
 
         private void initializeCamera() {
-            try {
                 camera = new PhotonCamera(camName.toString());
                 cameraInitialized = true;
-            } catch (Exception e) {
-                DataLogManager.log("warning: camera not initialized");
-            }
+        }
+
+        // Initializes the camera with the given name. This is intended for the master robot, if it is not running pose estimation.
+        // The master robot runs the TimeServer for the slave(s), so it is still required for the camera to be initialized.
+        @SuppressWarnings("resource")
+        public static void initializeCamera(String cameraName) {
+            new PhotonCamera(cameraName.toString());
         }
     }
-
 
 
     /**
      * multicam imp'l of {@link #updateVision()}
      * @param caller - the camera that called the function, used to determine which camera's pose to use
-     * @deprecated
      */
-    @Deprecated
-    private synchronized void updateVision(CameraName caller) {
-        // Tuple<EstimatedRobotPose, Double> leftUpdates = camThread.getUpdates();
-        // Tuple<EstimatedRobotPose, Double> rightUpdates = rightThread.getUpdates();
+    // private synchronized void updateVision(CameraName caller) {
+    //     Tuple<EstimatedRobotPose, Double> leftUpdates = camThread.getUpdates();
+    //     Tuple<EstimatedRobotPose, Double> rightUpdates = rightThread.getUpdates();
 
-        // final double maxAcceptableDist = 4d;
-        // boolean shouldUpdateLeft = true;
-        // boolean shouldUpdateRight = true;
+    //     final double maxAcceptableDist = 4d;
+    //     boolean shouldUpdateLeft = true;
+    //     boolean shouldUpdateRight = true;
 
 
-        // // prefer the camera that called the function (has known good values)
-        // // if the other camera has a target, prefer the one with the lower distance to best tag
-        // switch (caller) {
-        //     case LEFT:
-        //         if((rightThread.hasTarget() && rightUpdates.v < leftUpdates.v) && shouldUpdateRight) {
-        //             drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
-        //         } else if (shouldUpdateLeft) {
-        //             drivetrain.addVisionMeasurement(leftUpdates.k, leftUpdates.v);
-        //         }
-        //     break;
-        //     case RIGHT:
-        //         if((camThread.hasTarget() && leftUpdates.v < rightUpdates.v) && shouldUpdateLeft) {
-        //             drivetrain.addVisionMeasurement(leftUpdates.k, rightUpdates.v);
-        //         } else if (shouldUpdateRight) {
-        //             drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
-        //         }
-        //     break;
-        // }
-    }
+    //     // prefer the camera that called the function (has known good values)
+    //     // if the other camera has a target, prefer the one with the lower distance to best tag
+    //     switch (caller) {
+    //         case LEFT:
+    //             if((rightThread.hasTarget() && rightUpdates.v < leftUpdates.v) && shouldUpdateRight) {
+    //                 drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
+    //             } else if (shouldUpdateLeft) {
+    //                 drivetrain.addVisionMeasurement(leftUpdates.k, leftUpdates.v);
+    //             }
+    //         break;
+    //         case RIGHT:
+    //             if((camThread.hasTarget() && leftUpdates.v < rightUpdates.v) && shouldUpdateLeft) {
+    //                 drivetrain.addVisionMeasurement(leftUpdates.k, rightUpdates.v);
+    //             } else if (shouldUpdateRight) {
+    //                 drivetrain.addVisionMeasurement(rightUpdates.k, rightUpdates.v);
+    //             }
+    //         break;
+    //     }
+    // }
 
 }

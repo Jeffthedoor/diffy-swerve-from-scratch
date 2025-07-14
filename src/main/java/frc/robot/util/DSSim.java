@@ -13,7 +13,9 @@ import java.net.SocketException;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-
+/**
+ * creates a fake a driver station to enable/disable the slave robot
+ */
 public class DSSim {
 
     private interface ByteModifer {

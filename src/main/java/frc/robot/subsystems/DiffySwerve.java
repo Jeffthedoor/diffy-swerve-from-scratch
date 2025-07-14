@@ -146,9 +146,6 @@ public class DiffySwerve extends SubsystemBase {
 	}
 
 	public void resetOdometry(Pose2d pose) {
-		// odoAngleOffset = DriverStation.getAlliance().get() == Alliance.Red ? Math.PI
-		// * 0.5 : Math.PI * 1.5;
-		// TODO: figure out why we were resetting odoAngleOffset 90 degrees off
 		odometer.resetPosition(new Rotation2d(), getModulePositions(), pose);
 	}
 
