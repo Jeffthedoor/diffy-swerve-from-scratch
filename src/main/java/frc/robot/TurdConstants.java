@@ -79,6 +79,7 @@ public class TurdConstants {
 
 
         public static final double robotMaxSpeed = 3.99; //meters per second
+        public static final double robotMaxRotationMult = 0.6; //multiplied by robotMaxSpeed to get max rotation speed in rad/s
 
 
         // Azimuth Settings

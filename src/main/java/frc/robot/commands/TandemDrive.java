@@ -27,7 +27,7 @@ public class TandemDrive extends Command {
     private final PIDController anglePID = new PIDController(0.2, 0, 0);
     private final PIDController xPID = new PIDController(0.3, 0, 0);
     private final PIDController yPID = new PIDController(0.3, 0, 0);
-	private Supplier<Translation2d> joystickRight, joystickLeft;
+	private Supplier<Pose2d> tandemTarget;
 
     private Pose2d targetPose = new Pose2d();
 
@@ -39,10 +39,9 @@ public class TandemDrive extends Command {
     private DoubleEntry kD_angle;
     private StructEntry<Pose2d> targetPosePublisher;
 
-    public TandemDrive(TurdSwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight) {
+    public TandemDrive(TurdSwerve swerve, Supplier<Pose2d> tandemTarget) {
         this.swerve = swerve;
-        this.joystickLeft = joystickLeft;
-        this.joystickRight = joystickRight;
+        this.tandemTarget = tandemTarget;
 
         addRequirements(swerve);
     }
@@ -79,12 +78,7 @@ public class TandemDrive extends Command {
 
     @Override
     public void execute() {
-        Transform2d transform = new Transform2d(
-            new Translation2d(-joystickRight.get().getY(), -joystickRight.get().getX()), new Rotation2d(-joystickLeft.get().getX() * 0.6)
-        ).times(Robot.kDefaultPeriod).times(RobotConfig.robotMaxSpeed);
-
-        targetPose = targetPose.plus(transform);
-        Pose2d robotTargetPose = targetPose.plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
+        Pose2d robotTargetPose = tandemTarget.get().plus(new Transform2d(TurdConstants.RobotConfig.offsetPosition, Rotation2d.kZero));
 
 
         Pose2d currentPose = swerve.getPose();

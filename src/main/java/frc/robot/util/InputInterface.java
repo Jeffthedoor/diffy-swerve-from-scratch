@@ -5,6 +5,7 @@ package frc.robot.util;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.networktables.BooleanArrayPublisher;
 import edu.wpi.first.networktables.BooleanArraySubscriber;
 import edu.wpi.first.networktables.BooleanPublisher;
@@ -15,6 +16,8 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.DoubleSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.networktables.StructSubscriber;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class InputInterface {
@@ -27,6 +30,7 @@ public class InputInterface {
 	private static BooleanArrayPublisher buttonsPublisher;
 	private static BooleanPublisher isEnabledPublisher;
 	private static DoublePublisher timeStampPublisher;
+	private static StructPublisher<Pose2d> tandemTargetPublisher;
 
 	public static void initializeServer() {
 		publishInputs();
@@ -39,10 +43,11 @@ public class InputInterface {
 		buttonsPublisher = table.getBooleanArrayTopic("buttons").publish();
 		isEnabledPublisher = table.getBooleanTopic("isEnabled").publish();
 		timeStampPublisher = table.getDoubleTopic("timeStamp").publish();
+		tandemTargetPublisher = table.getStructTopic("tandemTarget", Pose2d.struct).publish();
 	}
 
-	public static void updateInputs(XboxController controller, boolean isenabled, double timeStamp) {
-		inputs = new Inputs(controller, isenabled, timeStamp);
+	public static void updateInputs(XboxController controller, boolean isenabled, double timeStamp, Pose2d tandemTarget) {
+		inputs = new Inputs(controller, isenabled, timeStamp, tandemTarget);
 
 		sticksPublisher.set(new double[] {
 				inputs.leftX, inputs.leftY, inputs.rightX, inputs.rightY, inputs.leftTrigger, inputs.rightTrigger, inputs.pov
@@ -53,6 +58,7 @@ public class InputInterface {
 		});
 		isEnabledPublisher.set(inputs.isEnabled);
 		timeStampPublisher.set(inputs.timeStamp);
+		tandemTargetPublisher.set(tandemTarget);
 	}
 
 	// client-side
@@ -61,6 +67,7 @@ public class InputInterface {
 	private static BooleanArraySubscriber buttonsSubscriber;
 	private static BooleanSubscriber isEnabledSubscriber;
 	private static DoubleSubscriber timeStampSubscriber;
+	private static StructSubscriber<Pose2d> tandemTargetSubscriber;
 
 	public static void initializeClient() {
 		NetworkTableInstance.getDefault().stopServer(); // Close the server if this is a slave robot
@@ -77,6 +84,7 @@ public class InputInterface {
 				.subscribe(new boolean[] { false, false, false, false, false, false, false, false });
 		isEnabledSubscriber = table.getBooleanTopic("isEnabled").subscribe(false);
 		timeStampSubscriber = table.getDoubleTopic("timeStamp").subscribe(0.0);
+		tandemTargetSubscriber = table.getStructTopic("tandemTarget", Pose2d.struct).subscribe(new Pose2d());
 	}
 
 	public static Inputs grabInputs() {
@@ -84,7 +92,8 @@ public class InputInterface {
 				sticksSubscriber.get(),
 				buttonsSubscriber.get(),
 				isEnabledSubscriber.get(),
-				timeStampSubscriber.get());
+				timeStampSubscriber.get(),
+				tandemTargetSubscriber.get());
 	}
 
 	public static class Inputs {
@@ -105,8 +114,11 @@ public class InputInterface {
 		public boolean backButton;
 		public boolean isEnabled;
 		public double timeStamp;
+		public Pose2d tandemTarget;
 
-		public Inputs(XboxController controller, boolean isenabled, double timeStamp) {
+		public Inputs(XboxController controller, boolean isenabled, double timeStamp, Pose2d tandemTarget) {
+			this.tandemTarget = tandemTarget;
+
 			//double values
 			this.isEnabled = isenabled;
 			this.timeStamp = timeStamp;
@@ -129,8 +141,8 @@ public class InputInterface {
 			this.backButton = controller.getBackButton();
 		}
 
-		public Inputs(double[] sticks, boolean[] buttons,
-				boolean isEnabled, double timeStamp) {
+		public Inputs(double[] sticks, boolean[] buttons, boolean isEnabled, double timeStamp, Pose2d tandemTarget) {
+			this.tandemTarget = tandemTarget;
 			//double values
 			this.leftX = sticks[0];
 			this.leftY = sticks[1];

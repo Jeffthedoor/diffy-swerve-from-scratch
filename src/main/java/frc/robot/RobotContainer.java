@@ -64,7 +64,7 @@ public class RobotContainer {
 		// swerve.setDefaultCommand(
 		// 		new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
-		swerve.setDefaultCommand(new TandemDrive(swerve, driverLeftJoystick, driverRightJoystick).ignoringDisable(true));
+		swerve.setDefaultCommand(new TandemDrive(swerve, inputGetter::getTandemTarget).ignoringDisable(true));
 
 
 		// PID tuning/testing function. just sets FL pod to DPAD angle.

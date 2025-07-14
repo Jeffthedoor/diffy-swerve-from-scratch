@@ -7,6 +7,8 @@ package frc.robot.subsystems;
 import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.util.DSSim;
@@ -92,5 +94,8 @@ public class InputGetter extends SubsystemBase {
     }
     public boolean getBackButton() {
         return inputs.backButton;
+    }
+    public Pose2d getTandemTarget() {
+        return inputs.tandemTarget;
     }
 }
