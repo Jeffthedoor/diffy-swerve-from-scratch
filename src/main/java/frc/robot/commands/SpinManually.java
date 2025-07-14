@@ -7,6 +7,7 @@ package frc.robot.commands;
 import java.util.function.Supplier;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.Constants.RobotConstants;
 import frc.robot.subsystems.DiffySwerve;
 
 public class SpinManually extends Command {
@@ -35,7 +36,7 @@ public class SpinManually extends Command {
     @Override
     public void execute() {
         if (pod.get() != -1) {
-            swerve.getPods().get(pod.get()).setRotationalSpeed(command.get());
+            swerve.getPods().get(pod.get()).setRotationalSpeed(command.get() * RobotConstants.SpinManuallyMaxSpeed);
         }
     }
 

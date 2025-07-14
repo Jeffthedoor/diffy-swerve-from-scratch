@@ -266,14 +266,14 @@ public class DrivePod extends SubsystemBase {
 
 	// average position accross drive motors
 	private double getPosition() {
-		// return (leftMotor.getPosition().getValueAsDouble() + rightMotor.getPosition().getValueAsDouble()) / 2;
-		return (drivetrainSim.getLeftPositionMeters() + drivetrainSim.getRightPositionMeters()) / 2;
+		return (leftMotor.getPosition().getValueAsDouble() + rightMotor.getPosition().getValueAsDouble()) / 2;
+		// return (drivetrainSim.getLeftPositionMeters() + drivetrainSim.getRightPositionMeters()) / 2;
 		//TODO: for the love of god change this before it goes on a robot
 	}
 
 	private double getVelocity() {
-		// return (leftMotor.getVelocity().getValueAsDouble() + rightMotor.getVelocity().getValueAsDouble()) / 2;
-		return (drivetrainSim.getLeftVelocityMetersPerSecond() + drivetrainSim.getRightVelocityMetersPerSecond()) / 2;
+		return (leftMotor.getVelocity().getValueAsDouble() + rightMotor.getVelocity().getValueAsDouble()) / 2;
+		// return (drivetrainSim.getLeftVelocityMetersPerSecond() + drivetrainSim.getRightVelocityMetersPerSecond()) / 2;
 		//TODO: for the love of god change this before it goes on a robot
 	}
 

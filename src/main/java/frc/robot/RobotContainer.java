@@ -27,22 +27,23 @@ public class RobotContainer {
 	public static final DiffySwerve swerve = new DiffySwerve();
 
 	public RobotContainer() {
-		//manually spin individual pods based on dpad input + right joystick input
-		joystick.pov(-1).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> joystick.getRightX()));
-
-		//point all pods at an angle based on right joystick input
-		joystick.leftTrigger().whileTrue(new PointAndDrive(swerve, () -> new Translation2d(joystick.getRightX(), joystick.getRightY()), () -> joystick.getRightTriggerAxis()));
-
-		joystick.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
-
-
 		//drive bindings
 		Supplier<Translation2d> driverRightJoystick = () -> new Translation2d(joystick.getRightX(),
 				joystick.getRightY());
 		Supplier<Translation2d> driverLeftJoystick = () -> new Translation2d(joystick.getLeftX(),
 				joystick.getLeftY());
-		swerve.setDefaultCommand(
-				new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
+
+		//manually spin individual pods based on dpad input + right joystick input; warning: this may break the pod hardstop
+		joystick.pov(-1).onFalse(new SpinManually(swerve, () -> 0, () -> joystick.getRightX()));
+
+		//point all pods at an angle based on right joystick input
+		swerve.setDefaultCommand(new PointAndDrive(swerve, driverRightJoystick, () -> joystick.getRightTriggerAxis()));
+
+		joystick.start().whileTrue(new InstantCommand(swerve::resetPods, swerve));
+
+
+		// swerve.setDefaultCommand(
+		// 		new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
 
 		// PID tuning/testing function. just sets FL pod to DPAD angle.

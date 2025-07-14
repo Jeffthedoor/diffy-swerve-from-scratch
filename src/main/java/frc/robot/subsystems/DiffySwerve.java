@@ -74,7 +74,7 @@ public class DiffySwerve extends SubsystemBase {
 			pods.add(new DrivePod(i, RobotMap.PodConfigs[i].encoderID, RobotMap.PodConfigs[i].leftMotorID,
 					RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert,
 					RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit,
-					PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.kP, PodConfig.kI, PodConfig.kD, PodConfig.motorGearing));
+					PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.kP.doubleValue(), PodConfig.kI.doubleValue(), PodConfig.kD.doubleValue(), PodConfig.motorGearing));
 		}
 
 		// initialze suppliers for information-sharing between pods
@@ -103,18 +103,7 @@ public class DiffySwerve extends SubsystemBase {
 		ChassisSpeedsPublisher = NetworkTableInstance.getDefault().getStructTopic("ChassisSpeeds", ChassisSpeeds.struct)
 				.publish();
 
-		// initialize PID subscribers
-		if(Constants.tuningMode) {
-			azimuthkPSub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kP").getEntry(PodConfig.kP);
-			azimuthkISub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kI").getEntry(PodConfig.kI);
-			azimuthkDSub = NetworkTableInstance.getDefault().getTable("PIDs").getDoubleTopic("kD").getEntry(PodConfig.kD);
-
-			azimuthkPSub.set(PodConfig.kP);
-			azimuthkISub.set(PodConfig.kI);
-			azimuthkDSub.set(PodConfig.kD);
-
-			azimuthkDSub.getAtomic();
-		}
+		
 
 		if (Robot.isSimulation()) {
 			gyroSimState = new Pigeon2SimState(gyro);
@@ -137,13 +126,13 @@ public class DiffySwerve extends SubsystemBase {
 
 
 		// update the numbers (if tuning mode is enabled)
-		if (Constants.tuningMode) {
+		if (PodConfig.kP.hasChanged() || PodConfig.kI.hasChanged() || PodConfig.kD.hasChanged()) {
 			pods.forEach(pod -> {
-			pod.setPID(
-					azimuthkPSub.get(),
-					azimuthkISub.get(),
-					azimuthkDSub.get());
-		});
+				pod.setPID(
+					PodConfig.kP.doubleValue(),
+					PodConfig.kI.doubleValue(),
+					PodConfig.kD.doubleValue());
+			});
 		}
 	}
 

@@ -15,6 +15,7 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Mass;
 import edu.wpi.first.units.measure.MomentOfInertia;
 import frc.robot.Constants.RobotMap.PodConfig;
+import frc.robot.util.TunableNumber;
 
 public final class Constants {
 	public static final boolean tuningMode = true; // if true, the robot will use the dashboard to get values for PIDs
@@ -72,9 +73,9 @@ public final class Constants {
 			public static final double maxOutput = 1;
 			public static final double rampRate = 0.2;
 
-			public static final double kP = 1;
-			public static final double kI = 0.0;
-			public static final double kD = 0.2;
+			public static final TunableNumber kP = new TunableNumber("kP", 1);
+			public static final TunableNumber kI = new TunableNumber("kI", 0);
+			public static final TunableNumber kD = new TunableNumber("kD", 0.2);
 		}
 	}
 
@@ -82,6 +83,7 @@ public final class Constants {
 		public static final double robotMaxLinearSpeed = 3.99; // meters per second
 		public static final double robotMaxRotationalSpeed = 3.0; // meters per second
 		public static final double motorMaxOutput = 1.0; // max output of the motors
+		public static final double SpinManuallyMaxSpeed = 0.2;
 	}
 
 	public final class JoystickConstants {
