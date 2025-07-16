@@ -259,15 +259,6 @@ public class TurdSwerve extends SubsystemBase {
 					// just a hardcoded 0.04 for now, this can be tuned further.
 					VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 		}
-
-		double distanceFromVision = poseEstimator.getOdometry().getTranslation().getDistance(visionPose.getTranslation());
-
-		if (poseEstimator.getOdometry().getTranslation().getDistance(visionPose.getTranslation()) > 0.5) {
-			poseEstimator.resetOdometry(visionPose);
-		} else {
-			poseEstimator.setOdometryMeasurementStdDevs(VecBuilder.fill(distanceFromVision, distanceFromVision, distanceFromVision));
-		}
-
 	}
 
 	

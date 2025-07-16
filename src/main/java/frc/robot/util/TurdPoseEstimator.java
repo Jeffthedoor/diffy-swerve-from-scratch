@@ -10,6 +10,7 @@ import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.Nat;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
+import edu.wpi.first.math.estimator.PoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -377,6 +378,15 @@ public class TurdPoseEstimator {
         // Step 9: Update latest pose estimate. Since we cleared all updates after this vision update,
         // it's guaranteed to be the latest vision update.
         m_poseEstimate = visionUpdate.compensate(m_odometry.getPoseMeters());
+
+
+		double distanceFromVision = odometrySample.get().getTranslation().getDistance(visionRobotPoseMeters.getTranslation());
+
+        if (distanceFromVision > 0.2) {
+			resetOdometry(visionRobotPoseMeters);
+		} else {
+			setOdometryMeasurementStdDevs(VecBuilder.fill(distanceFromVision, distanceFromVision, distanceFromVision));
+		}
     }
 
     /**
