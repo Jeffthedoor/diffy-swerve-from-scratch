@@ -6,6 +6,7 @@ package frc.robot.commands;
 
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -76,6 +77,10 @@ public class TandemDrive extends Command {
 
         //calculate the speeds to drive towards the target pose
         Pose2d currentPose = swerve.getPose();
+        // double xOut = MathUtil.applyDeadband(xPID.calculate(currentPose.getX(), robotTargetPose.getX()),  RobotConstants.tandemTranslation_deadband);
+        // double yOut = MathUtil.applyDeadband(yPID.calculate(currentPose.getY(), robotTargetPose.getY()),  RobotConstants.tandemTranslation_deadband);;
+        // double rOut = MathUtil.applyDeadband(anglePID.calculate(currentPose.getRotation().getRadians(), robotTargetPose.getRotation().getRadians()),  RobotConstants.tandemTranslation_deadband);;
+
         double xOut = xPID.calculate(currentPose.getX(), robotTargetPose.getX());
         double yOut = yPID.calculate(currentPose.getY(), robotTargetPose.getY());
         double rOut = anglePID.calculate(currentPose.getRotation().getRadians(), robotTargetPose.getRotation().getRadians());

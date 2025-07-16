@@ -256,7 +256,7 @@ public class TurdSwerve extends SubsystemBase {
 			poseEstimator.addVisionMeasurement(visionPose,
 					timestamp,
 					// just a hardcoded 0.04 for now, this can be tuned further.
-					VecBuilder.fill(0.04, 0.04, 0.04));
+					VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 		}
 	}
 

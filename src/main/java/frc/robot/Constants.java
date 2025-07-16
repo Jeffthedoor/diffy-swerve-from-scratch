@@ -95,8 +95,8 @@ public final class Constants {
 	}
 
 	public final class RobotConstants {
-		public static final double robotMaxLinearSpeed = 3.99; // meters per second
-		public static final double robotMaxRotationalSpeed = 3.0; // meters per second
+		public static final double robotMaxLinearSpeed = 1; // meters per second
+		public static final double robotMaxRotationalSpeed = 2.0; // meters per second
 		public static final double motorMaxOutput = 1.0; // max output of the motors
 
 		//PID gains for tandem drive controller
@@ -107,6 +107,9 @@ public final class Constants {
 		public static final double tandemkP_angle = 0.2;
 		public static final double tandemkI_angle = 0.0;
 		public static final double tandemkD_angle = 0.0;
+
+		public static final double tandemTranslation_deadband = 0.008;
+		public static final double tandemAngle_deadband = 0.005;
 
 		//forward, left, height; roll, pitch, yaw
 		public static final Translation2d centerOfMasterToTag = new Translation2d(0, -0.2102); // meters, distance from the center of the master robot to the tag
