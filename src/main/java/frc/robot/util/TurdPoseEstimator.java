@@ -383,7 +383,8 @@ public class TurdPoseEstimator {
 		double distanceFromVision = odometrySample.get().getTranslation().getDistance(visionRobotPoseMeters.getTranslation());
 
         if (distanceFromVision > 0.2) {
-			resetOdometry(visionRobotPoseMeters);
+            //offset the current odometry by the vision pose
+			resetOdometry(getOdometry().plus(visionRobotPoseMeters.minus(odometrySample.get())));
 		} else {
 			setOdometryMeasurementStdDevs(VecBuilder.fill(distanceFromVision, distanceFromVision, distanceFromVision));
 		}

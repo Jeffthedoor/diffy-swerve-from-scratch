@@ -19,6 +19,7 @@ public class InputGetter extends SubsystemBase {
 	private Inputs inputs;
     private DSSim dsSim;
     private boolean lastEnableStatus = false;
+    private double lastTimestamp = 0;
 
     public InputGetter() {
     	inputs = InputInterface.grabInputs();
@@ -34,13 +35,15 @@ public class InputGetter extends SubsystemBase {
     	inputs = InputInterface.grabInputs();
 
         if(!Constants.IS_MASTER) {
-            if(inputs.isEnabled != lastEnableStatus) {
+            //if the timestamp hasn't changed, then connection has been lost. disable no matter what.
+            if(inputs.timeStamp == lastTimestamp) {
+                dsSim.disable();
+            } else if(inputs.isEnabled != lastEnableStatus) {
                 if(inputs.isEnabled) {
                     dsSim.enable();
                 } else {
                     dsSim.disable();
                 }
-
                 lastEnableStatus = inputs.isEnabled;
             }
         }
