@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -23,6 +24,9 @@ import frc.robot.util.InputInterface;
 public class InputSender extends SubsystemBase {
 	/** Creates a new SendInputs. */
 	private XboxController controller;
+	private SlewRateLimiter xLimiter = new SlewRateLimiter(1.0);
+	private SlewRateLimiter yLimiter = new SlewRateLimiter(1.0);
+	private SlewRateLimiter rotationalLimiter = new SlewRateLimiter(3.0);
 
 
 	public InputSender() {
@@ -35,6 +39,6 @@ public class InputSender extends SubsystemBase {
 	}
 
 	private Pose2d grabJoystickVelocity() {
-        return new Pose2d(new Translation2d(controller.getRightY(), controller.getRightX()).times(-0.2), new Rotation2d(controller.getLeftX()).times(-0.1));
+        return new Pose2d(new Translation2d(xLimiter.calculate(controller.getRightY()), yLimiter.calculate(controller.getRightX())).times(-0.2), new Rotation2d(rotationalLimiter.calculate(controller.getLeftX())).times(-0.1));
 	}
 }

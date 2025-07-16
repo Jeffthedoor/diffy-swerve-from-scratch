@@ -100,7 +100,7 @@ public final class Constants {
 		public static final double motorMaxOutput = 1.0; // max output of the motors
 
 		//PID gains for tandem drive controller
-		public static final double tandemkP = 0.12;
+		public static final double tandemkP = 0.3;
 		public static final double tandemkI = 0.0;
 		public static final double tandemkD = 0.0;
 
