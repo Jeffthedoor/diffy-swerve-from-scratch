@@ -6,6 +6,7 @@ package frc.robot;
 
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
@@ -64,7 +65,7 @@ public class RobotContainer {
 		// swerve.setDefaultCommand(
 		// 		new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
-		swerve.setDefaultCommand(new TandemDrive(swerve, inputGetter::getTandemTarget).ignoringDisable(true));
+		swerve.setDefaultCommand(new TandemDrive(swerve, inputGetter::getJoystickVelocity).ignoringDisable(true));
 
 
 		// PID tuning/testing function. just sets FL pod to DPAD angle.

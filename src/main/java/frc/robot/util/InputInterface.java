@@ -30,7 +30,7 @@ public class InputInterface {
 	private static BooleanArrayPublisher buttonsPublisher;
 	private static BooleanPublisher isEnabledPublisher;
 	private static DoublePublisher timeStampPublisher;
-	private static StructPublisher<Pose2d> tandemTargetPublisher;
+	private static StructPublisher<Pose2d> joystickVelocityPublisher;
 
 	public static void initializeServer() {
 		publishInputs();
@@ -43,11 +43,11 @@ public class InputInterface {
 		buttonsPublisher = table.getBooleanArrayTopic("buttons").publish();
 		isEnabledPublisher = table.getBooleanTopic("isEnabled").publish();
 		timeStampPublisher = table.getDoubleTopic("timeStamp").publish();
-		tandemTargetPublisher = table.getStructTopic("tandemTarget", Pose2d.struct).publish();
+		joystickVelocityPublisher = table.getStructTopic("joystickVelocity", Pose2d.struct).publish();
 	}
 
-	public static void updateInputs(XboxController controller, boolean isenabled, double timeStamp, Pose2d tandemTarget) {
-		inputs = new Inputs(controller, isenabled, timeStamp, tandemTarget);
+	public static void updateInputs(XboxController controller, boolean isenabled, double timeStamp, Pose2d joystickVelocity) {
+		inputs = new Inputs(controller, isenabled, timeStamp, joystickVelocity);
 
 		sticksPublisher.set(new double[] {
 				inputs.leftX, inputs.leftY, inputs.rightX, inputs.rightY, inputs.leftTrigger, inputs.rightTrigger, inputs.pov
@@ -58,7 +58,7 @@ public class InputInterface {
 		});
 		isEnabledPublisher.set(inputs.isEnabled);
 		timeStampPublisher.set(inputs.timeStamp);
-		tandemTargetPublisher.set(tandemTarget);
+		joystickVelocityPublisher.set(joystickVelocity);
 	}
 
 	// client-side
@@ -67,7 +67,7 @@ public class InputInterface {
 	private static BooleanArraySubscriber buttonsSubscriber;
 	private static BooleanSubscriber isEnabledSubscriber;
 	private static DoubleSubscriber timeStampSubscriber;
-	private static StructSubscriber<Pose2d> tandemTargetSubscriber;
+	private static StructSubscriber<Pose2d> joystickVelocitySubscriber;
 
 	public static void initializeClient() {
 		NetworkTableInstance.getDefault().stopServer(); // Close the server if this is a slave robot
@@ -83,7 +83,7 @@ public class InputInterface {
 				.subscribe(new boolean[] { false, false, false, false, false, false, false, false });
 		isEnabledSubscriber = table.getBooleanTopic("isEnabled").subscribe(false);
 		timeStampSubscriber = table.getDoubleTopic("timeStamp").subscribe(0.0);
-		tandemTargetSubscriber = table.getStructTopic("tandemTarget", Pose2d.struct).subscribe(new Pose2d());
+		joystickVelocitySubscriber = table.getStructTopic("joystickVelocity", Pose2d.struct).subscribe(new Pose2d());
 	}
 
 	public static Inputs grabInputs() {
@@ -92,7 +92,7 @@ public class InputInterface {
 				buttonsSubscriber.get(),
 				isEnabledSubscriber.get(),
 				timeStampSubscriber.get(),
-				tandemTargetSubscriber.get());
+				joystickVelocitySubscriber.get());
 	}
 
 	public static class Inputs {
@@ -113,10 +113,10 @@ public class InputInterface {
 		public boolean backButton;
 		public boolean isEnabled;
 		public double timeStamp;
-		public Pose2d tandemTarget;
+		public Pose2d joystickVelocity;
 
-		public Inputs(XboxController controller, boolean isenabled, double timeStamp, Pose2d tandemTarget) {
-			this.tandemTarget = tandemTarget;
+		public Inputs(XboxController controller, boolean isenabled, double timeStamp, Pose2d joystickVelocity) {
+			this.joystickVelocity = joystickVelocity;
 
 			//double values
 			this.isEnabled = isenabled;
@@ -140,8 +140,8 @@ public class InputInterface {
 			this.backButton = controller.getBackButton();
 		}
 
-		public Inputs(double[] sticks, boolean[] buttons, boolean isEnabled, double timeStamp, Pose2d tandemTarget) {
-			this.tandemTarget = tandemTarget;
+		public Inputs(double[] sticks, boolean[] buttons, boolean isEnabled, double timeStamp, Pose2d joystickVelocity) {
+			this.joystickVelocity = joystickVelocity;
 			//double values
 			this.leftX = sticks[0];
 			this.leftY = sticks[1];

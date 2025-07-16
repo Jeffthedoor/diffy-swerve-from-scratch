@@ -4,6 +4,8 @@
 
 package frc.robot.subsystems;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -21,7 +23,7 @@ import frc.robot.util.InputInterface;
 public class InputSender extends SubsystemBase {
 	/** Creates a new SendInputs. */
 	private XboxController controller;
-	private Pose2d targetPose = new Pose2d();
+
 
 	public InputSender() {
 		controller = new XboxController(JoystickConstants.driverPort);		
@@ -29,16 +31,10 @@ public class InputSender extends SubsystemBase {
 
 	@Override
 	public void periodic() {
-		InputInterface.updateInputs(controller, DriverStation.isEnabled(), Timer.getFPGATimestamp(), grabTandemTarget());
+		InputInterface.updateInputs(controller, DriverStation.isEnabled(), Timer.getFPGATimestamp(), grabJoystickVelocity());
 	}
 
-	/**
-	 * updates and returns the robot formation's target position
-	 */
-	private Pose2d grabTandemTarget() {
-        return targetPose = targetPose.plus(new Transform2d(
-            new Translation2d(-controller.getRightY(), -controller.getRightX()), new Rotation2d(-controller.getLeftX() * TurdConstants.RobotConfig.robotMaxRotationMult)
-        ).times(Robot.kDefaultPeriod).times(RobotConfig.robotMaxSpeed));
-
+	private Pose2d grabJoystickVelocity() {
+        return new Pose2d(new Translation2d(controller.getRightY(), controller.getRightX()).times(-0.2), new Rotation2d(controller.getLeftX()).times(-0.1));
 	}
 }

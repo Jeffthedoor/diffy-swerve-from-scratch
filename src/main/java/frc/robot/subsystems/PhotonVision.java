@@ -51,6 +51,7 @@ public class PhotonVision extends SubsystemBase {
 
     private PhotonCameraSim leftCameraSim;
     private PhotonCameraSim rightCameraSim;
+    public static Pose2d closestMasterPose = new Pose2d();
 
     private SimCameraProperties cameraProp;
     private VisionTargetSim visionTarget;
@@ -123,7 +124,7 @@ public class PhotonVision extends SubsystemBase {
         //find the master pose with the closest timestamp to the camera's timestamp
         //NT timestamps are measured in microseconds, PhotonVision timestamps are seconds. Mulitiply by one million to convert/
         double visionTimeStampMicroSeconds = updates.v * 1000000d;
-        Pose2d closestMasterPose = timestampedMasterPoses.stream()
+        closestMasterPose = timestampedMasterPoses.stream()
             .min((a, b) -> Double.compare(Math.abs(a.serverTime - visionTimeStampMicroSeconds), Math.abs(b.serverTime - visionTimeStampMicroSeconds)))
             .map(pose -> pose.value)
             .orElse(null);

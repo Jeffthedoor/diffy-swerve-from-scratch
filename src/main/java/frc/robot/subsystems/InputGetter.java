@@ -92,7 +92,7 @@ public class InputGetter extends SubsystemBase {
     public boolean getBackButton() {
         return inputs.backButton;
     }
-    public Pose2d getTandemTarget() {
-        return inputs.tandemTarget;
+    public Pose2d getJoystickVelocity() {
+        return inputs.joystickVelocity;
     }
 }

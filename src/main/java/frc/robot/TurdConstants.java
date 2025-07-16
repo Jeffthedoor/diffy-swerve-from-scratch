@@ -4,7 +4,11 @@
 
 package frc.robot;
 
+import java.util.Arrays;
+
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
@@ -43,7 +47,8 @@ public class TurdConstants {
 
 		private static final double wheelBase = Units.inchesToMeters(11.054);
 		private static final double trackWidth = Units.inchesToMeters(11.054);
-		public static final Translation2d offsetPosition = new Translation2d(0.0, Constants.IS_MASTER ? 0.75 : -0.75); // center of rotation of robot
+		public static final Pose2d[] offsetPositions = {new Pose2d(new Translation2d(0.0, 0.75), new Rotation2d()), new Pose2d(new Translation2d(0.0, -0.75), new Rotation2d())}; // default center of rotation of robot
+		
 
 		public static final class SingleRobotConfig {
 			public PodConfig[] PodConfigs;
@@ -72,8 +77,8 @@ public class TurdConstants {
 		})};
 
 
-        public static final double robotMaxSpeed = 3.99; //meters per second
-        public static final double robotMaxRotationMult = 0.6; //multiplied by robotMaxSpeed to get max rotation speed in rad/s
+        public static final double robotMaxSpeed = 3.99; // joystick multiplier in meters per second
+        public static final double formationMaxRotationalSpeed = 0.6; //maximum rotational speed of the formation in rad/s
 
 
         // Azimuth Settings
