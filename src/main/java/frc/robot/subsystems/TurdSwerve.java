@@ -39,6 +39,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.TurdConstants.RobotConfig;
 import frc.robot.TurdConstants.RobotConfig.SingleRobotConfig;
+import frc.robot.util.TurdPoseEstimator;
 import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.TurdConstants;
@@ -50,7 +51,7 @@ public class TurdSwerve extends SubsystemBase {
 
 	private final ArrayList<TurdPod> pods = new ArrayList<TurdPod>();
 
-	private final SwerveDrivePoseEstimator poseEstimator;
+	private final TurdPoseEstimator poseEstimator;
 	private final SwerveDriveKinematics drivetrainKinematics;
 
 	public double targetAngle = 0;
@@ -89,7 +90,7 @@ public class TurdSwerve extends SubsystemBase {
 				.toArray(SwerveModulePosition[]::new);
 
 		// initialize odometry based on the pod positions
-		poseEstimator = new SwerveDrivePoseEstimator(
+		poseEstimator = new TurdPoseEstimator(
 				drivetrainKinematics,
 				getGyro(),
 				getModulePositions(),
@@ -247,7 +248,7 @@ public class TurdSwerve extends SubsystemBase {
 	public void addVisionMeasurement(Pose2d visionPose, double timestamp, double distance) {
 		if(DriverStation.isDisabled()) {
 			//fully sync pose estimator to vision on disable
-			poseEstimator.resetPose(visionPose);
+			poseEstimator.resetOdometry(visionPose);
 			poseEstimator.addVisionMeasurement(visionPose,
 					timestamp,
 					VecBuilder.fill(0.01, 0.01, 0.01));
@@ -256,7 +257,7 @@ public class TurdSwerve extends SubsystemBase {
 			poseEstimator.addVisionMeasurement(visionPose,
 					timestamp,
 					// just a hardcoded 0.04 for now, this can be tuned further.
-					VecBuilder.fill(0.04, 0.04, 0.04));
+					VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 		}
 	}
 
