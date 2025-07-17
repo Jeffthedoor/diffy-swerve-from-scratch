@@ -6,6 +6,7 @@ package frc.robot.subsystems;
 
 import java.util.function.Supplier;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -16,9 +17,11 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.JoystickConstants;
+import frc.robot.Constants;
 import frc.robot.Robot;
 import frc.robot.TurdConstants;
 import frc.robot.TurdConstants.RobotConfig;
+import frc.robot.commands.IndependentDrive;
 import frc.robot.util.InputInterface;
 
 public class InputSender extends SubsystemBase {
@@ -35,10 +38,14 @@ public class InputSender extends SubsystemBase {
 
 	@Override
 	public void periodic() {
-		InputInterface.updateInputs(controller, DriverStation.isEnabled(), Timer.getFPGATimestamp(), grabJoystickVelocity());
+		if (Constants.IS_MASTER) {
+			InputInterface.updateInputs(controller, DriverStation.isEnabled(), Timer.getFPGATimestamp(), grabJoystickVelocity());
+		} else {
+			InputInterface.updateInputs(IndependentDrive.masterOffset);
+		}
 	}
 
 	private Pose2d grabJoystickVelocity() {
-        return new Pose2d(new Translation2d(xLimiter.calculate(controller.getRightY()), yLimiter.calculate(controller.getRightX())).times(-0.2), new Rotation2d(rotationalLimiter.calculate(controller.getLeftX())).times(-0.1));
+        return new Pose2d(new Translation2d((MathUtil.applyDeadband(controller.getRightY(), TurdConstants.controllerDeadband)), (MathUtil.applyDeadband(controller.getRightX(), TurdConstants.controllerDeadband))).times(-0.2), new Rotation2d((MathUtil.applyDeadband(controller.getLeftX(), TurdConstants.controllerDeadband))).times(-0.1));
 	}
 }

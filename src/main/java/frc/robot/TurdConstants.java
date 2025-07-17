@@ -16,6 +16,7 @@ import edu.wpi.first.math.util.Units;
 /** Add your docs here. */
 public class TurdConstants {
 	public static boolean tuningMode = false;
+	public static final double controllerDeadband = 0.03;
 	public class RobotConfig {
 		public static final double driveMetersPerMotorRotation = 1/(Units.inchesToMeters(2) * Math.PI / 1.36); //Wheel Diameter M * PI / Enc Count Per Rev / Gear Ratio
 

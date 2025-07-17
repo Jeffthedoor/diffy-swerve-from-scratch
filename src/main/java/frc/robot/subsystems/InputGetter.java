@@ -8,6 +8,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
@@ -49,6 +50,17 @@ public class InputGetter extends SubsystemBase {
         }
 
 	}
+    
+    public Pose2d getMasterOffset() {
+        return inputs.masterOffset;
+    }
+
+    public Pose2d getLeftJoystick() {
+        return new Pose2d(-0.2 * getLeftY(), -0.2 * getLeftX(), Rotation2d.fromRadians(0.25 * getLeftTriggerAxis()));
+    }
+    public Pose2d getRightJoystick() {
+        return new Pose2d(-0.2 * getRightY(), -0.2 * getRightX(), Rotation2d.fromRadians(0.25 * getRightTriggerAxis()));
+    }
 
     public double getLeftX() {
         return inputs.leftX;

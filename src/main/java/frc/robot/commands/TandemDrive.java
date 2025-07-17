@@ -31,7 +31,6 @@ import frc.robot.util.TunableNumber;
 public class TandemDrive extends Command {
     private final TurdSwerve swerve;
     private Supplier<Pose2d> joystickVelocity;
-    private Pose2d offsetPosition = RobotConfig.offsetPositions[Constants.IS_MASTER ? 0 : 1];
 
 
     private StructEntry<Pose2d> targetPosePublisher;
@@ -78,6 +77,7 @@ public class TandemDrive extends Command {
     public void execute() {
         // ChassisSpeeds speeds = new ChassisSpeeds(joystickVelocity.get().getX(), joystickVelocity.get().getY(), joystickVelocity.get().getRotation().getRadians());
         // SwerveModuleState desiredState = formationKinematics.toSwerveModuleStates(speeds)[Constants.IS_MASTER ? 0 : 1];
+        Pose2d offsetPosition = RobotConfig.offsetPositions[Constants.IS_MASTER ? 0 : 1];
         Pose2d robotVelocity = new Pose2d(joystickVelocity.get().getTranslation().rotateBy(swerve.getPose().getRotation()).plus(new Translation2d(joystickVelocity.get().getRotation().times(offsetPosition.getTranslation().getNorm()).getRadians(), offsetPosition.getTranslation().getAngle().plus(Rotation2d.kCCW_90deg).plus(offsetPosition.getRotation()).plus(swerve.getPose().getRotation()))), joystickVelocity.get().getRotation());
         
         //grab the target pose calculated by the master robot, add it onto the offset position for this robot

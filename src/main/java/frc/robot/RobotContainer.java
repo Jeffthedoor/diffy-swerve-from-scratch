@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -21,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.JoystickConstants;
 import frc.robot.Constants.RobotMap.CameraName;
 import frc.robot.commands.DriveCommand;
+import frc.robot.commands.IndependentDrive;
 import frc.robot.commands.PointAndDrive;
 import frc.robot.commands.SpinManually;
 import frc.robot.commands.TandemDrive;
@@ -37,8 +39,8 @@ public class RobotContainer {
 
 	public RobotContainer() {
         inputGetter = new InputGetter();
+		new InputSender();
         if(Constants.IS_MASTER) {
-            new InputSender();
 			swerve = new TurdSwerve(0);
 			PhotonVision.initializeMasterCamera();
         } else {
@@ -46,7 +48,7 @@ public class RobotContainer {
 			photonVision = new PhotonVision(swerve, CameraName.slave);
 		}
 
-
+		new Trigger(() -> inputGetter.getAButton()).onTrue(new IndependentDrive(swerve, () -> inputGetter.getLeftJoystick(), () -> inputGetter.getRightJoystick(), () -> inputGetter.getMasterOffset()).until(() -> inputGetter.getBButton()));
 
 		//manually spin individual pods based on dpad input + right joystick input
 		new Trigger(() -> (inputGetter.getPOV() == -1)).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> inputGetter.getRightX()));
