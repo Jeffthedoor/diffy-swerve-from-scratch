@@ -185,7 +185,7 @@ public class TurdPoseEstimator {
      */
     public void resetOdometry(Pose2d pose) {
         m_odometry.resetPose(pose);
-        m_odometryPoseBuffer.clear();
+        // m_odometryPoseBuffer.clear();
     }
 
     public Pose2d getOdometry() {
@@ -382,11 +382,11 @@ public class TurdPoseEstimator {
 
 		double distanceFromVision = odometrySample.get().getTranslation().getDistance(visionRobotPoseMeters.getTranslation());
 
-        if (distanceFromVision > 0.2) {
+        if (distanceFromVision > 0.05) {
             //offset the current odometry by the vision pose
 			resetOdometry(getOdometry().plus(visionRobotPoseMeters.minus(odometrySample.get())));
 		} else {
-			setOdometryMeasurementStdDevs(VecBuilder.fill(distanceFromVision, distanceFromVision, distanceFromVision));
+			setOdometryMeasurementStdDevs(VecBuilder.fill(distanceFromVision * 4, distanceFromVision * 4, distanceFromVision * 4));
 		}
     }
 
