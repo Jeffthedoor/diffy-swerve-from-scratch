@@ -104,7 +104,7 @@ public final class Constants {
 		public static final double tandemkI = 0.0;
 		public static final double tandemkD = 0.0;
 
-		public static final double tandemkP_angle = 0.2;
+		public static final double tandemkP_angle = 0.3;
 		public static final double tandemkI_angle = 0.0;
 		public static final double tandemkD_angle = 0.0;
 

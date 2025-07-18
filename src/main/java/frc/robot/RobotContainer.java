@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.JoystickConstants;
 import frc.robot.Constants.RobotMap.CameraName;
+import frc.robot.TurdConstants.RobotConfig;
 import frc.robot.commands.DriveCommand;
 import frc.robot.commands.IndependentDrive;
 import frc.robot.commands.PointAndDrive;
@@ -48,8 +49,9 @@ public class RobotContainer {
 			photonVision = new PhotonVision(swerve, CameraName.slave);
 		}
 
-		new Trigger(() -> inputGetter.getAButton()).onTrue(new IndependentDrive(swerve, () -> inputGetter.getLeftJoystick(), () -> inputGetter.getRightJoystick(), () -> inputGetter.getMasterOffset()).until(() -> inputGetter.getBButton()));
-
+		new Trigger(() -> inputGetter.getAButton()).onTrue(new IndependentDrive(swerve, () -> inputGetter.getLeftJoystick(), () -> inputGetter.getRightJoystick(), () -> inputGetter.getMasterOffset()));
+		new Trigger(() -> inputGetter.getBButton()).onTrue(new TandemDrive(swerve, inputGetter::getJoystickVelocity).ignoringDisable(true));
+		new Trigger(() -> inputGetter.getXButton()).onTrue(RobotConfig.reset());
 		//manually spin individual pods based on dpad input + right joystick input
 		new Trigger(() -> (inputGetter.getPOV() == -1)).onFalse(new SpinManually(swerve, () -> getPodToTest(), () -> inputGetter.getRightX()));
 
@@ -67,7 +69,6 @@ public class RobotContainer {
 		// swerve.setDefaultCommand(
 		// 		new DriveCommand(swerve, driverLeftJoystick, driverRightJoystick));
 
-		swerve.setDefaultCommand(new TandemDrive(swerve, inputGetter::getJoystickVelocity).ignoringDisable(true));
 
 
 		// PID tuning/testing function. just sets FL pod to DPAD angle.

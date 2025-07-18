@@ -18,6 +18,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.DoubleEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructEntry;
+import edu.wpi.first.networktables.StructSubscriber;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Robot;
@@ -34,6 +35,7 @@ public class TandemDrive extends Command {
 
 
     private StructEntry<Pose2d> targetPosePublisher;
+    private StructSubscriber<Pose2d> masterPoseSubscriber;
 
 
 
@@ -53,6 +55,7 @@ public class TandemDrive extends Command {
     public TandemDrive(TurdSwerve swerve, Supplier<Pose2d> joystickVelocity) {
         this.swerve = swerve;
         this.joystickVelocity = joystickVelocity;
+        masterPoseSubscriber = NetworkTableInstance.getDefault().getTable(Constants.RobotType.master.toString()).getStructTopic("RobotPose", Pose2d.struct).subscribe(new Pose2d());
 
         addRequirements(swerve);
     }
@@ -60,13 +63,16 @@ public class TandemDrive extends Command {
     @Override
     public void initialize() {
         anglePID.enableContinuousInput(0, Math.PI * 2);
+        anglePID.setTolerance(0.02);
+        xPID.setTolerance(0.01);
+        yPID.setTolerance(0.01);
 
         
         if(Constants.IS_MASTER) {
             //reset the initial pose to the robot-system pose
             // only do this if on the master robot, as slaves are synced to master automatically
             // Pose2d robotTargetPose = targetPose.plus(new Transform2d(RobotConfig.offsetPositions[Constants.IS_MASTER ? 0 : 1], Rotation2d.kZero));
-            // swerve.resetPose(robotTargetPose);
+            // swerve.resetPose(new Pose2d(5, 8, new Rotation2d()));
         }
 
         //initialize telemetry
@@ -78,21 +84,22 @@ public class TandemDrive extends Command {
         // ChassisSpeeds speeds = new ChassisSpeeds(joystickVelocity.get().getX(), joystickVelocity.get().getY(), joystickVelocity.get().getRotation().getRadians());
         // SwerveModuleState desiredState = formationKinematics.toSwerveModuleStates(speeds)[Constants.IS_MASTER ? 0 : 1];
         Pose2d offsetPosition = RobotConfig.offsetPositions[Constants.IS_MASTER ? 0 : 1];
-        Pose2d robotVelocity = new Pose2d(joystickVelocity.get().getTranslation().rotateBy(swerve.getPose().getRotation()).plus(new Translation2d(joystickVelocity.get().getRotation().times(offsetPosition.getTranslation().getNorm()).getRadians(), offsetPosition.getTranslation().getAngle().plus(Rotation2d.kCCW_90deg).plus(offsetPosition.getRotation()).plus(swerve.getPose().getRotation()))), joystickVelocity.get().getRotation());
-        
+        Pose2d currentPose = swerve.getPose();
+        Pose2d masterPose = Constants.IS_MASTER ? currentPose : masterPoseSubscriber.get();
+        Pose2d robotVelocity = new Pose2d(joystickVelocity.get().getTranslation().rotateBy(masterPose.getRotation()).plus(new Translation2d(joystickVelocity.get().getRotation().times(offsetPosition.getTranslation().getNorm()).getRadians(), offsetPosition.getTranslation().getAngle().plus(Rotation2d.kCCW_90deg).plus(offsetPosition.getRotation()).plus(masterPose.getRotation()))), joystickVelocity.get().getRotation());
         //grab the target pose calculated by the master robot, add it onto the offset position for this robot
-        Pose2d robotTargetPose = PhotonVision.closestMasterPose.plus(RobotConfig.offsetPositions[1].minus(RobotConfig.offsetPositions[0]));
+        Pose2d robotTargetPose = masterPose.plus(RobotConfig.offsetPositions[1].minus(RobotConfig.offsetPositions[0]));
 
         //calculate the speeds to drive towards the target pose
-        Pose2d currentPose = swerve.getPose();
         double xOut = robotVelocity.getX() + xPID.calculate(currentPose.getX(), robotTargetPose.getX());
         double yOut = robotVelocity.getY() + yPID.calculate(currentPose.getY(), robotTargetPose.getY());
         double rOut = robotVelocity.getRotation().getRadians() + anglePID.calculate(currentPose.getRotation().getRadians(), robotTargetPose.getRotation().getRadians());
-
-        if (Constants.IS_MASTER) {
-            swerve.setRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(robotVelocity.getX(), robotVelocity.getY(), robotVelocity.getRotation().getRadians(), currentPose.getRotation()));
-        } else {
+        
+        boolean PIDAtTolerance = anglePID.atSetpoint() && xPID.atSetpoint() && yPID.atSetpoint();
+        if (!Constants.IS_MASTER && !PIDAtTolerance) {
             swerve.setRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(xOut, yOut, rOut, currentPose.getRotation()));
+        } else {
+            swerve.setRobotSpeeds(ChassisSpeeds.fromFieldRelativeSpeeds(robotVelocity.getX(), robotVelocity.getY(), robotVelocity.getRotation().getRadians(), currentPose.getRotation()));
         }
 
         

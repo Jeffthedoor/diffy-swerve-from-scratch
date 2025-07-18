@@ -12,6 +12,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 
 /** Add your docs here. */
 public class TurdConstants {
@@ -48,8 +50,14 @@ public class TurdConstants {
 
 		private static final double wheelBase = Units.inchesToMeters(11.054);
 		private static final double trackWidth = Units.inchesToMeters(11.054);
-		public static final Pose2d[] offsetPositions = {new Pose2d(new Translation2d(0.0, 0.75), new Rotation2d()), new Pose2d(new Translation2d(0.0, -0.75), new Rotation2d())}; // default center of rotation of robot
-		
+		public static Pose2d[] offsetPositions = {new Pose2d(new Translation2d(0.0, 0.4), new Rotation2d()), new Pose2d(new Translation2d(0.0, -0.4), new Rotation2d())}; // default center of rotation of robot
+		public static Command reset() {
+			return new InstantCommand(() -> resetOffsetPositions());
+		}
+		public static void resetOffsetPositions() {
+			offsetPositions[0] = new Pose2d(new Translation2d(0.0, 0.4), new Rotation2d());
+			offsetPositions[1] = new Pose2d(new Translation2d(0.0, -0.4), new Rotation2d());
+		}
 
 		public static final class SingleRobotConfig {
 			public PodConfig[] PodConfigs;

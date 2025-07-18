@@ -56,10 +56,10 @@ public class InputGetter extends SubsystemBase {
     }
 
     public Pose2d getLeftJoystick() {
-        return new Pose2d(-0.2 * getLeftY(), -0.2 * getLeftX(), Rotation2d.fromRadians(0.25 * getLeftTriggerAxis()));
+        return new Pose2d(-0.1 * getLeftY(), -0.1 * getLeftX(), Rotation2d.fromRadians(0.4 * getLeftTriggerAxis()));
     }
     public Pose2d getRightJoystick() {
-        return new Pose2d(-0.2 * getRightY(), -0.2 * getRightX(), Rotation2d.fromRadians(0.25 * getRightTriggerAxis()));
+        return new Pose2d(-0.1 * getRightY(), -0.1 * getRightX(), Rotation2d.fromRadians(0.4 * getRightTriggerAxis()));
     }
 
     public double getLeftX() {

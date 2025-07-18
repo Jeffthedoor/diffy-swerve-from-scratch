@@ -46,6 +46,6 @@ public class InputSender extends SubsystemBase {
 	}
 
 	private Pose2d grabJoystickVelocity() {
-        return new Pose2d(new Translation2d((MathUtil.applyDeadband(controller.getRightY(), TurdConstants.controllerDeadband)), (MathUtil.applyDeadband(controller.getRightX(), TurdConstants.controllerDeadband))).times(-0.2), new Rotation2d((MathUtil.applyDeadband(controller.getLeftX(), TurdConstants.controllerDeadband))).times(-0.1));
+        return new Pose2d(new Translation2d((MathUtil.applyDeadband(xLimiter.calculate(controller.getRightY()), TurdConstants.controllerDeadband)), (MathUtil.applyDeadband(yLimiter.calculate(controller.getRightX()), TurdConstants.controllerDeadband))).times(-0.05), new Rotation2d((MathUtil.applyDeadband(rotationalLimiter.calculate(controller.getLeftX()), TurdConstants.controllerDeadband))).times(-0.2));
 	}
 }
