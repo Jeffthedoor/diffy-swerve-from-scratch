@@ -37,21 +37,21 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.TurdConstants.RobotConfig;
-import frc.robot.TurdConstants.RobotConfig.SingleRobotConfig;
-import frc.robot.util.TurdPoseEstimator;
+import frc.robot.Constants.RobotConfig;
+import frc.robot.Constants.RobotConfig.SingleRobotConfig;
+import frc.robot.util.NERDPoseEstimator;
 import frc.robot.Constants;
 import frc.robot.Robot;
-import frc.robot.TurdConstants;
 
-public class TurdSwerve extends SubsystemBase {
+/**a subsystem for a NERDSwerve robot */
+public class Swerve extends SubsystemBase {
 	private final Pigeon2 gyro;
 
 	private Pigeon2SimState gyroSimState;
 
-	private final ArrayList<TurdPod> pods = new ArrayList<TurdPod>();
+	private final ArrayList<DrivePod> pods = new ArrayList<DrivePod>();
 
-	private final TurdPoseEstimator poseEstimator;
+	private final NERDPoseEstimator poseEstimator;
 	private final SwerveDriveKinematics drivetrainKinematics;
 
 	public double targetAngle = 0;
@@ -67,7 +67,7 @@ public class TurdSwerve extends SubsystemBase {
 
 	double simGyroPosition = 0;
 
-	public TurdSwerve(int robot) {
+	public Swerve(int robot) {
 		drivetrainKinematics = RobotConfig.robotConfigs[robot].drivetrainKinematics;
 		gyro = new Pigeon2(RobotConfig.pigeonID);
 
@@ -77,7 +77,7 @@ public class TurdSwerve extends SubsystemBase {
 					// RobotMap.PodConfigs[i].rightMotorID, PodConfig.leftMotorInvert, PodConfig.rightMotorInvert,
 					// RobotMap.PodConfigs[i].encoderOffset, PodConfig.encoderInvert, PodConfig.ampLimit,
 					// PodConfig.motorsBrake, PodConfig.rampRate, PodConfig.kP, PodConfig.kI, PodConfig.kD, PodConfig.motorGearing));
-					new TurdPod(RobotConfig.robotConfigs[robot].PodConfigs[i].encoderID, RobotConfig.robotConfigs[robot].PodConfigs[i].azimuthID, RobotConfig.robotConfigs[robot].PodConfigs[i].driveID, RobotConfig.robotConfigs[robot].PodConfigs[i].encoderOffset, RobotConfig.azimuthInvert, 
+					new DrivePod(RobotConfig.robotConfigs[robot].PodConfigs[i].encoderID, RobotConfig.robotConfigs[robot].PodConfigs[i].azimuthID, RobotConfig.robotConfigs[robot].PodConfigs[i].driveID, RobotConfig.robotConfigs[robot].PodConfigs[i].encoderOffset, RobotConfig.azimuthInvert, 
 					RobotConfig.azimuthAmpLimit, RobotConfig.azimuthRadiansPerMotorRotation, RobotConfig.azimuthBrake, RobotConfig.azimuthMotorRampRate, RobotConfig.azimuthkP, 
 					RobotConfig.azimuthkI, RobotConfig.azimuthkD, RobotConfig.azimuthkS, RobotConfig.azimuthMaxOutput, RobotConfig.azimuthDriveSpeedMultiplier, RobotConfig.driveInvert, 
 					RobotConfig.driveAmpLimit, RobotConfig.driveBrake, RobotConfig.driveMotorRampRate));
@@ -86,11 +86,11 @@ public class TurdSwerve extends SubsystemBase {
 
 		// initialize pod positions
 		SwerveModulePosition positions[] = pods.stream()
-				.map(TurdPod::getPodPosition)
+				.map(DrivePod::getPodPosition)
 				.toArray(SwerveModulePosition[]::new);
 
 		// initialize odometry based on the pod positions
-		poseEstimator = new TurdPoseEstimator(
+		poseEstimator = new NERDPoseEstimator(
 				drivetrainKinematics,
 				getGyro(),
 				getModulePositions(),
@@ -98,7 +98,6 @@ public class TurdSwerve extends SubsystemBase {
 
 
 		// gyro.configAllSettings(new Pigeon2Configuration());
-		//TODO: make pigeon config if necessary
 
 		// initialize telemetry publishers
 		String tab = Constants.currentRobot.toString();
@@ -110,7 +109,7 @@ public class TurdSwerve extends SubsystemBase {
 				.publish();
 
 		// initialize PID subscribers
-		if(TurdConstants.tuningMode) {
+		if(Constants.tuningMode) {
 			azimuthkPSub = NetworkTableInstance.getDefault().getTable(tab).getSubTable("PIDs").getDoubleTopic("kP").getEntry(RobotConfig.PodConfig.kP);
 			azimuthkISub = NetworkTableInstance.getDefault().getTable(tab).getSubTable("PIDs").getDoubleTopic("kI").getEntry(RobotConfig.PodConfig.kI);
 			azimuthkDSub = NetworkTableInstance.getDefault().getTable(tab).getSubTable("PIDs").getDoubleTopic("kD").getEntry(RobotConfig.PodConfig.kD);
@@ -143,7 +142,7 @@ public class TurdSwerve extends SubsystemBase {
 
 
 		// update the numbers (if tuning mode is enabled)
-		if (TurdConstants.tuningMode) {
+		if (Constants.tuningMode) {
 			pods.forEach(pod -> {
 			pod.setPID(
 					azimuthkPSub.get(),
@@ -153,29 +152,53 @@ public class TurdSwerve extends SubsystemBase {
 		}
 	}
 
-
+	/**
+	 * gets the current robot chassis speeds
+	 * 
+	 * @return the current robot chassis speeds
+	 */
 	private ChassisSpeeds getCurrentRobotChassisSpeeds() {
 		// get the current robot chassis speeds
 		return drivetrainKinematics.toChassisSpeeds(getModuleStates());
 	}
 
+	/**
+	 * gets the current robot pose
+	 * 
+	 * @return the current robot pose
+	 */
 	public Pose2d getPose() {
 		return poseEstimator.getEstimatedPosition();
 	}
 
+	/**
+	 * resets the odometry to the given pose
+	 * 
+	 * @param pose the new pose to reset to
+	 */
 	public void resetOdometry(Pose2d pose) {
 		poseEstimator.resetPosition(new Rotation2d(), getModulePositions(), pose);
 	}
 
+	/**
+	 * gets the current robot chassis speeds
+	 * 
+	 * @return the current robot chassis speeds
+	 */
 	public SwerveModulePosition[] getModulePositions() {
 		return pods.stream()
-				.map(TurdPod::getPodPosition)
+				.map(DrivePod::getPodPosition)
 				.toArray(SwerveModulePosition[]::new);
 	}
 
+	/**
+	 * gets the current robot module states
+	 * 
+	 * @return the current robot module states
+	 */
 	public SwerveModuleState[] getModuleStates() {
 		return pods.stream()
-				.map(TurdPod::getState)
+				.map(DrivePod::getState)
 				.toArray(SwerveModuleState[]::new);
 	}
 
@@ -184,7 +207,7 @@ public class TurdSwerve extends SubsystemBase {
 	 */
 	public void resetPods() {
 		resetGyro();
-		pods.stream().forEach(TurdPod::resetPod);
+		pods.stream().forEach(DrivePod::resetPod);
 
 		resetOdometry(new Pose2d());
 	}
@@ -193,7 +216,7 @@ public class TurdSwerve extends SubsystemBase {
 	 * sets all motor output to 0
 	 */
 	public void stop() {
-		pods.stream().forEach(TurdPod::stop);
+		pods.stream().forEach(DrivePod::stop);
 	}
 
 	public Rotation2d getGyro() {
@@ -226,7 +249,7 @@ public class TurdSwerve extends SubsystemBase {
 		}
 	}
 
-	public ArrayList<TurdPod> getPods() {
+	public ArrayList<DrivePod> getPods() {
 		return pods;
 	}
 
@@ -256,7 +279,7 @@ public class TurdSwerve extends SubsystemBase {
 			//add some bias to odo on enable
 			poseEstimator.addVisionMeasurement(visionPose,
 					timestamp,
-					// just a hardcoded 0.04 for now, this can be tuned further.
+					// decreases vision confidence with distance
 					VecBuilder.fill(distance / 2, distance / 2, distance / 2));
 		}
 	}
@@ -265,9 +288,7 @@ public class TurdSwerve extends SubsystemBase {
 	/**
 	 * sets pose to this
 	 * 
-	 * @param visionPose estimated pose from the vision system
-	 * @param distance   distance from the vision target to the robot, used for
-	 *                   uncertainty in the pose estimation
+	 * @param pose estimated pose from the vision system
 	 */
 	public void resetPose(Pose2d pose) {
 		poseEstimator.resetPose(pose);

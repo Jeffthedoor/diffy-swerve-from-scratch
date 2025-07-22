@@ -39,10 +39,8 @@ import java.util.TreeMap;
  *
  * <p>{@link PoseEstimator#addVisionMeasurement} can be called as infrequently as you want; if you
  * never call it then this class will behave exactly like regular encoder odometry.
- *
- * @param <T> Wheel positions type.
  */
-public class TurdPoseEstimator {
+public class NERDPoseEstimator {
     private final SwerveDriveOdometry m_odometry;
     private final Matrix<N3, N1> m_q = new Matrix<>(Nat.N3(), Nat.N1());
     private final Matrix<N3, N3> m_visionK = new Matrix<>(Nat.N3(), Nat.N3());
@@ -71,7 +69,7 @@ public class TurdPoseEstimator {
      *         the vision pose measurement less.
      */
     @SuppressWarnings("PMD.UnusedFormalParameter")
-    private TurdPoseEstimator(
+    private NERDPoseEstimator(
             SwerveDriveKinematics kinematics,
             SwerveDriveOdometry odometry,
             Matrix<N3, N1> stateStdDevs,
@@ -100,7 +98,7 @@ public class TurdPoseEstimator {
      * @param modulePositions The current distance measurements and rotations of the swerve modules.
      * @param initialPoseMeters The starting pose estimate.
      */
-    public TurdPoseEstimator(
+    public NERDPoseEstimator(
             SwerveDriveKinematics kinematics,
             Rotation2d gyroAngle,
             SwerveModulePosition[] modulePositions,
@@ -128,7 +126,7 @@ public class TurdPoseEstimator {
      *         in meters, y position in meters, and heading in radians). Increase these numbers to trust
      *         the vision pose measurement less.
      */
-    public TurdPoseEstimator(
+    public NERDPoseEstimator(
             SwerveDriveKinematics kinematics,
             Rotation2d gyroAngle,
             SwerveModulePosition[] modulePositions,
@@ -189,7 +187,6 @@ public class TurdPoseEstimator {
 
     /**
      * call this when drift gets too bad
-     * @param pose pose to reset to
      */
   public void resetOdometryPosition(Rotation2d gyroAngle, SwerveModulePosition[] wheelPositions, Pose2d poseMeters) {
         m_odometry.resetPosition(gyroAngle, wheelPositions, poseMeters);
@@ -324,7 +321,7 @@ public class TurdPoseEstimator {
      * while still accounting for measurement noise.
      *
      * <p>This method can be called as infrequently as you want, as long as you are calling {@link
-     * PoseEstimator#update} every loop.
+     * NERDPoseEstimator#update} every loop.
      *
      * <p>To promote stability of the pose estimate and make it robust to bad vision data, we
      * recommend only adding vision measurements that are already within one meter or so of the
@@ -332,8 +329,8 @@ public class TurdPoseEstimator {
      *
      * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
      * @param timestampSeconds The timestamp of the vision measurement in seconds. Note that if you
-     *         don't use your own time source by calling {@link
-     *         PoseEstimator#updateWithTime(double,Rotation2d)} then you must use a timestamp with
+     *         don't use your own time source by calling {@link #updateWithTime(double,Rotation2d,SwerveModulePosition[])},
+     *         then you must use a timestamp with
      *         an epoch since FPGA startup (i.e., the epoch of this timestamp is the same epoch as {@link
      *         edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}.) This means that you should use {@link
      *         edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as your time source or sync the epochs.
@@ -419,7 +416,7 @@ public class TurdPoseEstimator {
      *
      * @param visionRobotPoseMeters The pose of the robot as measured by the vision camera.
      * @param timestampSeconds The timestamp of the vision measurement in seconds. Note that if you
-     *         don't use your own time source by calling {@link #updateWithTime}, then you must use a
+     *         don't use your own time source by calling {@link #updateWithTime(double, Rotation2d, SwerveModulePosition[])}, then you must use a
      *         timestamp with an epoch since FPGA startup (i.e., the epoch of this timestamp is the same
      *         epoch as {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()}). This means that you
      *         should use {@link edu.wpi.first.wpilibj.Timer#getFPGATimestamp()} as your time source in

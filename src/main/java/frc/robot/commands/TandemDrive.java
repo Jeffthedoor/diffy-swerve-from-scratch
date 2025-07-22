@@ -22,15 +22,15 @@ import edu.wpi.first.networktables.StructSubscriber;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
 import frc.robot.Robot;
-import frc.robot.TurdConstants;
 import frc.robot.Constants.RobotConstants;
-import frc.robot.TurdConstants.RobotConfig;
+import frc.robot.Constants.RobotConfig;
 import frc.robot.subsystems.PhotonVision;
-import frc.robot.subsystems.TurdSwerve;
+import frc.robot.subsystems.Swerve;
 import frc.robot.util.TunableNumber;
 
+/**drives two robots in tandem */
 public class TandemDrive extends Command {
-    private final TurdSwerve swerve;
+    private final Swerve swerve;
     private Supplier<Pose2d> joystickVelocity;
 
 
@@ -52,7 +52,7 @@ public class TandemDrive extends Command {
     private final PIDController xPID = new PIDController(kP.getDefault(), kI.getDefault(), kD.getDefault());
     private final PIDController yPID = new PIDController(kP.getDefault(), kI.getDefault(), kD.getDefault());
 
-    public TandemDrive(TurdSwerve swerve, Supplier<Pose2d> joystickVelocity) {
+    public TandemDrive(Swerve swerve, Supplier<Pose2d> joystickVelocity) {
         this.swerve = swerve;
         this.joystickVelocity = joystickVelocity;
         masterPoseSubscriber = NetworkTableInstance.getDefault().getTable(Constants.RobotType.master.toString()).getStructTopic("RobotPose", Pose2d.struct).subscribe(new Pose2d());

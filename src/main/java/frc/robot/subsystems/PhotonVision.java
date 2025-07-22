@@ -45,12 +45,8 @@ import frc.robot.Constants.RobotMap.CameraName;
 import frc.robot.util.Triplet;
 import frc.robot.util.Tuple;
 
+/**Constructs a Photn Vision camera and runs multi-threaded Pose Estimation */
 public class PhotonVision extends SubsystemBase {
-
-    private VisionSystemSim visionSim;
-
-    private PhotonCameraSim leftCameraSim;
-    private PhotonCameraSim rightCameraSim;
     public static Pose2d closestMasterPose = new Pose2d();
 
     private SimCameraProperties cameraProp;
@@ -65,11 +61,11 @@ public class PhotonVision extends SubsystemBase {
 
     public Pose2d pose = new Pose2d();
 
-    private TurdSwerve drivetrain;
+    private Swerve drivetrain;
 
     private CameraThread camThread;
 
-    public PhotonVision(TurdSwerve drivetrain, CameraName camName) {
+    public PhotonVision(Swerve drivetrain, CameraName camName) {
         this.drivetrain = drivetrain;
 
         camThread = new CameraThread(camName, RobotConstants.SLAVE_CAMERA_LOCATION);
@@ -85,7 +81,6 @@ public class PhotonVision extends SubsystemBase {
     }
 
     /**
-     * @implNote
      * only use for master robot, if no pose estimation is desired. does not start camera thread.
      * This is used to initialize the camera for the master robot, so that it can run the TimeServer for the slave(s).
      */

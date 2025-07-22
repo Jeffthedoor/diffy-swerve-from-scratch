@@ -16,6 +16,8 @@ import frc.robot.util.DSSim;
 import frc.robot.util.InputInterface;
 import frc.robot.util.InputInterface.Inputs;
 
+/**subsystem that runs on both robots to grab class from NT. 
+ * Also handles enable/disable on slave */
 public class InputGetter extends SubsystemBase {
 	private Inputs inputs;
     private DSSim dsSim;

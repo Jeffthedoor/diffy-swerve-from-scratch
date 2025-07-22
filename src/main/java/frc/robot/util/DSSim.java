@@ -17,7 +17,6 @@ import edu.wpi.first.wpilibj2.command.InstantCommand;
  * creates a fake a driver station to enable/disable the slave robot
  */
 public class DSSim {
-
     private interface ByteModifer {
         void modify(byte[] data, short sendcount);
     }
@@ -102,6 +101,9 @@ public class DSSim {
         return m_thread != null;
     }
 
+    /**
+     * initializes the DSSim, should be called once at the start of the robot code
+     */
     public void init() {
         // usingFake = !DriverStation.isDSAttached();
         usingFake = true;
@@ -110,6 +112,9 @@ public class DSSim {
         // }
     }
 
+    /**
+     * enables the DSSim, should be called when the robot is enabled
+     */
     public void enable() {
         stop();
         // if (checkRealDS()) {
@@ -120,6 +125,7 @@ public class DSSim {
         start(this::generateEnabledDsPacket);
     }
 
+    /*disables the DSim, should be called when the robot is disabled */
     public void disable() {
         stop();
         // if (checkRealDS()) {
@@ -130,6 +136,10 @@ public class DSSim {
         start(this::generateDisabledDsPacket);
     }
 
+    /**
+     * returns a command that disables the DSSim
+     * @return a command that disables the DSSim
+     */
     public Command disableCmd() {
         return new InstantCommand(this::disable).ignoringDisable(true);
     }

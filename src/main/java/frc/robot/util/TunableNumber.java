@@ -21,7 +21,7 @@ public class TunableNumber extends Number{
     /**
      * Create a new TunableNumber with the default value
      * 
-     * @param dashboardKey Key on dashboard
+     * @param name Key on dashboard
      * @param defaultValue Default value
      */
     public TunableNumber(String name, double defaultValue) {
@@ -34,6 +34,7 @@ public class TunableNumber extends Number{
      * 
      * @param name Key on dashboard
      * @param defaultValue Default value
+     * @param tableKey Key for the table to put the number in
      */
     public TunableNumber(String name, double defaultValue, String tableKey) {
         this.tableKey = tableKey;

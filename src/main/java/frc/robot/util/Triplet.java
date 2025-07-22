@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+/** generic class that holds three objects */
 public class Triplet<K, V, A> extends Object { 
     public final K k;
     public final V v;

@@ -16,14 +16,16 @@ import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.networktables.StructSubscriber;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
-import frc.robot.TurdConstants.RobotConfig;
+import frc.robot.Constants.RobotConfig;
 import frc.robot.subsystems.PhotonVision;
-import frc.robot.subsystems.TurdSwerve;
+import frc.robot.subsystems.Swerve;
 
-/* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
+/**
+ * drives a given robot independently
+ */
 public class IndependentDrive extends Command {
   public static Pose2d masterOffset = RobotConfig.offsetPositions[0];
-  private final TurdSwerve swerve;
+  private final Swerve swerve;
   private final Supplier<Pose2d> leftJoystickVelocity, rightJoystickVelocity, masterOffsetSupplier;
   
 	private SlewRateLimiter xLimiter = new SlewRateLimiter(0.1);
@@ -32,8 +34,8 @@ public class IndependentDrive extends Command {
   private StructSubscriber<Pose2d> masterPoseSubscriber;
   private StructPublisher<Pose2d> centerPosePublisher, masterOffsetPublisher, slaveOffsetPublisher, slaveTargetPosePublisher, masterCurrentPosePublisher, slaveCurrentPosePublisher;
   // private Pose2d formationCenterPosition = new Pose2d();
-  /** Creates a new IndependentDrive, the archnemesis of TandemDrive */
-  public IndependentDrive(TurdSwerve swerve, Supplier<Pose2d> leftJoystickVelocity, Supplier<Pose2d> rightJoystickVelocity, Supplier<Pose2d> masterOffsetSupplier) {
+  
+  public IndependentDrive(Swerve swerve, Supplier<Pose2d> leftJoystickVelocity, Supplier<Pose2d> rightJoystickVelocity, Supplier<Pose2d> masterOffsetSupplier) {
     this.swerve = swerve;
     this.leftJoystickVelocity = leftJoystickVelocity;
     this.rightJoystickVelocity = rightJoystickVelocity;
@@ -47,10 +49,8 @@ public class IndependentDrive extends Command {
     masterPoseSubscriber = NetworkTableInstance.getDefault().getTable(Constants.RobotType.master.toString()).getStructTopic("RobotPose", Pose2d.struct).subscribe(new Pose2d());
     
     addRequirements(swerve);
-    // Use addRequirements() here to declare subsystem dependencies.
   }
 
-  // Called when the command is initially scheduled.
   @Override
   public void initialize() {
     xLimiter.reset(0);
@@ -59,7 +59,6 @@ public class IndependentDrive extends Command {
     // formationCenterPosition = 
   }
 
-  // Called every time the scheduler runs while the command is scheduled.
   @Override
   public void execute() {
     Pose2d velocity = Constants.IS_MASTER ? leftJoystickVelocity.get() : rightJoystickVelocity.get();
@@ -81,13 +80,6 @@ public class IndependentDrive extends Command {
       masterCurrentPosePublisher.accept(masterPose);
       slaveCurrentPosePublisher.accept(currentPose);
     }
-  }
-  
-
-  // Called once the command ends or is interrupted.
-  @Override
-  public void end(boolean interrupted) {
-    
   }
 
   // Returns true when the command should end.

@@ -20,8 +20,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.networktables.StructSubscriber;
 import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.TurdConstants;
-import frc.robot.TurdConstants.RobotConfig;
+import frc.robot.Constants.JoystickConstants;
+import frc.robot.Constants.RobotConfig;;
 
 public class InputInterface {
 	private static Inputs inputs;
@@ -80,10 +80,11 @@ public class InputInterface {
 	private static StructSubscriber<Pose2d> joystickVelocitySubscriber;
 	private static StructSubscriber<Pose2d> masterOffsetSubscriber;
 
+	/** initializes the client-side inputs, should be called once at the start of the robot code on slave(s*/
 	public static void initializeClient() {
 		NetworkTableInstance.getDefault().stopServer(); // Close the server if this is a slave robot
 		NetworkTableInstance.getDefault().startClient4("slave"); // if multiple slaves are implemented, this has to be keyed
-		NetworkTableInstance.getDefault().setServer("roboRIO-9312-FRC.local"); // Replace with your team number
+		NetworkTableInstance.getDefault().setServer("roboRIO-9312-FRC.local");
 
 		subscribeInputs();
 	}
@@ -108,6 +109,7 @@ public class InputInterface {
 				masterOffsetSubscriber.get());
 	}
 
+	/**An object that holds all inputs passed from the master to the slave */
 	public static class Inputs {
 		public double leftX;
 		public double leftY;
@@ -139,10 +141,10 @@ public class InputInterface {
 			//double values
 			this.isEnabled = isenabled;
 			this.timeStamp = timeStamp;
-			this.leftX = MathUtil.applyDeadband(controller.getLeftX(), TurdConstants.controllerDeadband);
-			this.leftY = MathUtil.applyDeadband(controller.getLeftY(), TurdConstants.controllerDeadband);
-			this.rightX = MathUtil.applyDeadband(controller.getRightX(), TurdConstants.controllerDeadband);
-			this.rightY = MathUtil.applyDeadband(controller.getRightY(), TurdConstants.controllerDeadband);
+			this.leftX = MathUtil.applyDeadband(controller.getLeftX(), JoystickConstants.deadband);
+			this.leftY = MathUtil.applyDeadband(controller.getLeftY(), JoystickConstants.deadband);
+			this.rightX = MathUtil.applyDeadband(controller.getRightX(), JoystickConstants.deadband);
+			this.rightY = MathUtil.applyDeadband(controller.getRightY(), JoystickConstants.deadband);
 			this.leftTrigger = controller.getLeftTriggerAxis();
 			this.rightTrigger = controller.getRightTriggerAxis();
 			this.pov = controller.getPOV();
@@ -164,10 +166,10 @@ public class InputInterface {
 			//double values
 			this.isEnabled = isenabled;
 			this.timeStamp = timeStamp;
-			this.leftX = MathUtil.applyDeadband(controller.getLeftX(), TurdConstants.controllerDeadband);
-			this.leftY = MathUtil.applyDeadband(controller.getLeftY(), TurdConstants.controllerDeadband);
-			this.rightX = MathUtil.applyDeadband(controller.getRightX(), TurdConstants.controllerDeadband);
-			this.rightY = MathUtil.applyDeadband(controller.getRightY(), TurdConstants.controllerDeadband);
+			this.leftX = MathUtil.applyDeadband(controller.getLeftX(), JoystickConstants.deadband);
+			this.leftY = MathUtil.applyDeadband(controller.getLeftY(), JoystickConstants.deadband);
+			this.rightX = MathUtil.applyDeadband(controller.getRightX(), JoystickConstants.deadband);
+			this.rightY = MathUtil.applyDeadband(controller.getRightY(), JoystickConstants.deadband);
 			this.leftTrigger = controller.getLeftTriggerAxis();
 			this.rightTrigger = controller.getRightTriggerAxis();
 			this.pov = controller.getPOV();
@@ -187,10 +189,10 @@ public class InputInterface {
 			this.joystickVelocity = joystickVelocity;
 			this.masterOffset = masterOffset;
 			//double values
-			this.leftX = MathUtil.applyDeadband(sticks[0], TurdConstants.controllerDeadband);
-			this.leftY = MathUtil.applyDeadband(sticks[1], TurdConstants.controllerDeadband);
-			this.rightX = MathUtil.applyDeadband(sticks[2], TurdConstants.controllerDeadband);
-			this.rightY = MathUtil.applyDeadband(sticks[3], TurdConstants.controllerDeadband);
+			this.leftX = MathUtil.applyDeadband(sticks[0], JoystickConstants.deadband);
+			this.leftY = MathUtil.applyDeadband(sticks[1], JoystickConstants.deadband);
+			this.rightX = MathUtil.applyDeadband(sticks[2], JoystickConstants.deadband);
+			this.rightY = MathUtil.applyDeadband(sticks[3], JoystickConstants.deadband);
 			this.leftTrigger = sticks[4];
 			this.rightTrigger = sticks[5];
 			this.pov = (int) sticks[6];

@@ -8,15 +8,15 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants.JoystickConstants;
 import frc.robot.Constants.RobotConstants;
-import frc.robot.subsystems.DiffySwerve;
-import frc.robot.subsystems.TurdSwerve;
+import frc.robot.subsystems.Swerve;
 
+/** Drives a single robot based on given joystick inputs */
 public class DriveCommand extends Command {
 
-	private TurdSwerve swerve;
+	private Swerve swerve;
 	private Supplier<Translation2d> joystickRight, joystickLeft;
 
-	public DriveCommand(TurdSwerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight) {
+	public DriveCommand(Swerve swerve, Supplier<Translation2d> joystickLeft, Supplier<Translation2d> joystickRight) {
 		this.swerve = swerve;
 		this.joystickRight = joystickRight;
 		this.joystickLeft = joystickLeft;

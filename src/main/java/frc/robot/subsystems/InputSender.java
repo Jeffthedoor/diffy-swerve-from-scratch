@@ -19,11 +19,11 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.JoystickConstants;
 import frc.robot.Constants;
 import frc.robot.Robot;
-import frc.robot.TurdConstants;
-import frc.robot.TurdConstants.RobotConfig;
+import frc.robot.Constants.RobotConfig;
 import frc.robot.commands.IndependentDrive;
 import frc.robot.util.InputInterface;
 
+/**subsystem that runs on the master to send inputs to NT */
 public class InputSender extends SubsystemBase {
 	/** Creates a new SendInputs. */
 	private XboxController controller;
@@ -46,6 +46,6 @@ public class InputSender extends SubsystemBase {
 	}
 
 	private Pose2d grabJoystickVelocity() {
-        return new Pose2d(new Translation2d((MathUtil.applyDeadband(xLimiter.calculate(controller.getRightY()), TurdConstants.controllerDeadband)), (MathUtil.applyDeadband(yLimiter.calculate(controller.getRightX()), TurdConstants.controllerDeadband))).times(-0.05), new Rotation2d((MathUtil.applyDeadband(rotationalLimiter.calculate(controller.getLeftX()), TurdConstants.controllerDeadband))).times(-0.2));
+        return new Pose2d(new Translation2d((MathUtil.applyDeadband(xLimiter.calculate(controller.getRightY()), JoystickConstants.deadband)), (MathUtil.applyDeadband(yLimiter.calculate(controller.getRightX()), JoystickConstants.deadband))).times(-0.05), new Rotation2d((MathUtil.applyDeadband(rotationalLimiter.calculate(controller.getLeftX()), JoystickConstants.deadband))).times(-0.2));
 	}
 }
