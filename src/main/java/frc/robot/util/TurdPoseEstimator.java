@@ -185,7 +185,14 @@ public class TurdPoseEstimator {
      */
     public void resetOdometry(Pose2d pose) {
         m_odometry.resetPose(pose);
-        m_odometryPoseBuffer.clear();
+    }
+
+    /**
+     * call this when drift gets too bad
+     * @param pose pose to reset to
+     */
+  public void resetOdometryPosition(Rotation2d gyroAngle, SwerveModulePosition[] wheelPositions, Pose2d poseMeters) {
+        m_odometry.resetPosition(gyroAngle, wheelPositions, poseMeters);
     }
 
     public Pose2d getOdometry() {
@@ -382,12 +389,17 @@ public class TurdPoseEstimator {
 
 		double distanceFromVision = odometrySample.get().getTranslation().getDistance(visionRobotPoseMeters.getTranslation());
 
-        if (distanceFromVision > 0.08) {
+        if (distanceFromVision > 0.05) {
             //offset the current odometry by the vision pose
-			resetOdometry(getOdometry().plus(visionRobotPoseMeters.minus(odometrySample.get())));
+            Pose2d offsetPose = getOdometry().plus(visionRobotPoseMeters.minus(odometrySample.get()));
+			if(offsetPose.getTranslation().getDistance(visionRobotPoseMeters.getTranslation()) > 0.05) {
+                resetOdometry(visionRobotPoseMeters);
+            } else {
+                resetOdometry(offsetPose);
+            }
 		} else {
-			setOdometryMeasurementStdDevs(VecBuilder.fill(distanceFromVision, distanceFromVision, distanceFromVision));
-		}
+            setOdometryMeasurementStdDevs(VecBuilder.fill(distanceFromVision * 3, distanceFromVision * 3, distanceFromVision * 3));
+        }
     }
 
     /**

@@ -131,10 +131,9 @@ public class PhotonVision extends SubsystemBase {
         
         
         //account for tag-to-robot and camera-to-robot offsets and then combine vision measurement with master odometry positio
-        Transform2d visionTranslation = new Transform2d(new Translation2d(-updates.k.getY(), -(updates.k.getX())).plus(RobotConstants.centerOfMasterToTag).rotateBy(drivetrain.getPose().getRotation()), updates.k.getRotation().minus(new Rotation2d(Degrees.of(90))));
-        Pose2d fieldRelativePose = new Pose2d(closestMasterPose.getTranslation().plus(visionTranslation.getTranslation()),
-        visionTranslation.getRotation().plus(closestMasterPose.getRotation()));
-        // fieldRelativePose = new Pose2d(fieldRelativePose.getX(), fieldRelativePose.getY(), fieldRelativePose.getRotation().plus(Rotation2d.kCW_90deg));
+        Transform2d visionTranslation = new Transform2d(updates.k.getTranslation().plus(RobotConstants.centerOfMasterToTag).rotateBy(drivetrain.getPose().getRotation()).rotateBy(Rotation2d.k180deg), updates.k.getRotation().unaryMinus().rotateBy(Rotation2d.kCW_90deg));//.rotateBy(Rotation2d.kCW_90deg));//.plus(new Rotation2d(Degrees.of(90))));
+        
+        Pose2d fieldRelativePose = new Pose2d(closestMasterPose.getTranslation().plus(visionTranslation.getTranslation()), closestMasterPose.getRotation().plus(visionTranslation.getRotation()));
 
 
         // add the master pose to the translation to get field-relative pose. 
@@ -215,7 +214,7 @@ public class PhotonVision extends SubsystemBase {
                                 // grabs the best target from the result and sends to pose estimator, iFF the pose ambiguity is below a (hardcoded) threshold
                                 if (!(result.getBestTarget().getPoseAmbiguity() > 0.5)) {
                                     //grabs the target pose, relative to the camera, and compensates for the camera position
-                                    robotToTag = result.getBestTarget().getBestCameraToTarget().plus(cameraPosition);
+                                    robotToTag = cameraPosition.plus(result.getBestTarget().getBestCameraToTarget());
                                     timestamp = result.getTimestampSeconds();
                                 } else {
                                     DataLogManager.log("[PhotonVision] WARNING: " + camName.toString() + " pose ambiguity is high");
