@@ -25,6 +25,11 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import frc.robot.Constants.RobotMap.PodConfig;
 
+/**
+ * Constants class holds all configuration values and constants for the robot.
+ * Includes robot type, CAN IDs, kinematics, PID gains, and hardware settings.
+ * Organized into nested classes for logical grouping.
+ */
 public final class Constants {
 	public static final boolean tuningMode = false; // if true, the robot will use the dashboard to get values for PIDs
 
@@ -38,8 +43,10 @@ public final class Constants {
 
 	public static RobotType currentRobot = IS_MASTER ? RobotType.master : RobotType.slave;
 
-	/*
-	* CAN ID, Invert, Pod Positions, Offsets, Conversion Rates */
+	/**
+	 * RobotMap contains hardware mapping and configuration for robot components.
+	 * Includes pod configurations, camera names, and kinematics.
+	 */
 	public final class RobotMap {
 		private static final double wheelBase = 1.0;
 		private static final double trackWidth = 1.0;
@@ -62,6 +69,10 @@ public final class Constants {
 			master, slave
 		}
 
+		/**
+		 * PodConfig holds configuration for a single swerve pod.
+		 * Includes motor IDs, encoder offsets, and position.
+		 */
 		public static final class PodConfig {
 			public final int leftMotorID;
 			public final int rightMotorID;
@@ -92,6 +103,10 @@ public final class Constants {
 		}
 	}
 
+	/**
+	 * RobotConstants contains robot-wide constants for control and hardware.
+	 * Includes speed limits, PID gains, and camera/vision offsets.
+	 */
 	public final class RobotConstants {
 		public static final double robotMaxLinearSpeed = 1; // meters per second
 		public static final double robotMaxRotationalSpeed = 2.0; // meters per second
@@ -114,6 +129,10 @@ public final class Constants {
 		public static final Transform3d SLAVE_CAMERA_LOCATION = new Transform3d(new Translation3d(0.152, 0.1996, -0.015), new Rotation3d(Degrees.of(180), Degrees.of(0), Degrees.of(105)));
 	}
 
+	/**
+	 * JoystickConstants contains configuration for joystick input.
+	 * Includes port numbers and deadband values.
+	 */
 	public final class JoystickConstants {
 		public static final int driverPort = 0; // port of the driver controller
 
@@ -121,6 +140,9 @@ public final class Constants {
 		public static final double triggerDeadband = 0.05; // deadband for the triggers
 	}
 
+	/**
+	 * SimConstants contains simulation-specific constants for robot physics.
+	 */
 	public final class SimConstants {
 		public static final double inertia = 0.0605; // kg*m^2
 		public static final double mass = 50; // kg, approximate mass of the robot
@@ -130,12 +152,19 @@ public final class Constants {
 
 	}
 
+	/**
+	 * RobotConfig contains configuration for the robot's drive system and pods.
+	 * Includes pod configs, kinematics, and reset logic.
+	 */
 	public class RobotConfig {
 		public static final double driveMetersPerMotorRotation = 1/(Units.inchesToMeters(2) * Math.PI / 1.36); //Wheel Diameter M * PI / Enc Count Per Rev / Gear Ratio
 
         public static final int pigeonID = 25;
         public static final PIDController gyroPID = new PIDController(0.046, 0d, 0.001);
 
+        /**
+		 * PodConfig holds configuration for a single robot pod.
+		 */
         public static final class PodConfig {
 			public final int azimuthID;
 			public final int driveID;
@@ -159,6 +188,7 @@ public final class Constants {
 			public static final double kD = 0.2;
 		}
 
+
 		private static final double wheelBase = Units.inchesToMeters(11.054);
 		private static final double trackWidth = Units.inchesToMeters(11.054);
 		public static Pose2d[] offsetPositions = {new Pose2d(new Translation2d(0.0, 0.4), new Rotation2d()), new Pose2d(new Translation2d(0.0, -0.4), new Rotation2d())}; // default center of rotation of robot
@@ -170,6 +200,9 @@ public final class Constants {
 			offsetPositions[1] = new Pose2d(new Translation2d(0.0, -0.4), new Rotation2d());
 		}
 
+		/**
+		 * SingleRobotConfig holds configuration for a robot's set of pods and kinematics.
+		 */
 		public static final class SingleRobotConfig {
 			public PodConfig[] PodConfigs;
 			public SwerveDriveKinematics drivetrainKinematics;

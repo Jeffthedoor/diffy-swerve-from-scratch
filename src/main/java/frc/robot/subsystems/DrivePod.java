@@ -25,7 +25,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 
-/** a single NERDSwerve drive pod */
+/**
+ * Represents a single NERDSwerve drive pod.
+ * Handles motor and encoder configuration, state control, and pod operations.
+ */
 public class DrivePod extends SubsystemBase {
     public CANcoder absoluteEncoder;
     public TalonFX azimuthMotor;

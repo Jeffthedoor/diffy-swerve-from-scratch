@@ -32,6 +32,10 @@ import frc.robot.subsystems.InputGetter;
 import frc.robot.subsystems.InputSender;
 import frc.robot.subsystems.PhotonVision;
 
+/**
+ * RobotContainer sets up subsystems, commands, and input bindings for the robot.
+ * Handles initialization and autonomous command selection.
+ */
 public class RobotContainer {
 	public final Swerve swerve;
     private InputGetter inputGetter;

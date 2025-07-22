@@ -45,7 +45,10 @@ import frc.robot.Constants.RobotMap.CameraName;
 import frc.robot.util.Triplet;
 import frc.robot.util.Tuple;
 
-/**Constructs a Photn Vision camera and runs multi-threaded Pose Estimation */
+/**
+ * PhotonVision subsystem constructs a Photon Vision camera and runs multi-threaded pose estimation.
+ * Handles vision processing, pose updates, and communication with drivetrain.
+ */
 public class PhotonVision extends SubsystemBase {
     public static Pose2d closestMasterPose = new Pose2d();
 
@@ -142,6 +145,10 @@ public class PhotonVision extends SubsystemBase {
     }
 
 
+    /**
+     * CameraThread handles vision processing in a separate thread.
+     * Grabs camera results, computes pose, and updates vision measurements.
+     */
     private class CameraThread extends Thread {
         // private EstimatedRobotPose pose = new EstimatedRobotPose(new Pose3d(), 0, List.of(), PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR);
         // private PhotonPoseEstimator poseEstimator;

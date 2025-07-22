@@ -23,6 +23,10 @@ import edu.wpi.first.wpilibj.XboxController;
 import frc.robot.Constants.JoystickConstants;
 import frc.robot.Constants.RobotConfig;;
 
+/**
+ * InputInterface handles all inputs from the driver station, both on master and slave robots.
+ * Manages NetworkTables server/client setup and input publishing/subscribing.
+ */
 public class InputInterface {
 	private static Inputs inputs;
 	private static NetworkTable table = NetworkTableInstance.getDefault().getTable("Inputs");
@@ -109,7 +113,10 @@ public class InputInterface {
 				masterOffsetSubscriber.get());
 	}
 
-	/**An object that holds all inputs passed from the master to the slave */
+	/**
+	 * Inputs holds all input values passed from master to slave.
+	 * Includes joystick axes, button states, and robot status.
+	 */
 	public static class Inputs {
 		public double leftX;
 		public double leftY;

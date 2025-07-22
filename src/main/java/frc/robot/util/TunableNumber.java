@@ -5,8 +5,8 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import frc.robot.Constants;
 
 /**
- * Class for a tunable number. Gets value from dashboard in tuning mode, returns default if not or
- * value not in dashboard.
+ * TunableNumber allows for runtime tuning of numeric values via NetworkTables.
+ * Gets value from dashboard in tuning mode, returns default otherwise.
  */
 public class TunableNumber extends Number{
     private String tableKey = "TunableNumbers";
